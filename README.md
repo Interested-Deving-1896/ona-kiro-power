@@ -100,6 +100,14 @@ cat <<'EOF' | ona ai automation execute - --environment-id <environment-id>
 EOF
 ```
 
+Reporting rule for one-off runs:
+
+- this is a background handoff, not a foreground task runner
+- if `ona ai automation execute` emits an `agent_execution_id`, treat the run as successfully handed off even if the CLI later times out while polling for status
+- do not immediately retry the same prompt after a `deadline_exceeded` polling failure if the agent execution was already started, because that can create duplicate runs
+- respond with the environment link so the user can check progress later
+- build the environment link from the authenticated host when available, for example `<host>/details/<environment-id>`
+
 This is different from:
 
 - `ona ai automation start`, which starts a saved automation definition
@@ -407,6 +415,14 @@ The power should:
 - validate command flags against the live CLI help before recommending them
 - avoid unsupported formatting flags such as `-o json` on `ona environment create`
 - fall back to the simplest known-good command form when only the environment ID is needed
+
+### The power retried after Ona already accepted the run
+
+The power should:
+
+- treat `agent_execution_id` in `ona ai automation execute` output as the success signal for handoff
+- avoid rerunning the same prompt just because status polling timed out afterward
+- say the work was handed off to Ona and link the user to the environment details page
 
 ### The power tried to reuse some other running environment automatically
 

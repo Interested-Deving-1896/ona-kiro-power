@@ -116,7 +116,8 @@ Suggested flow:
 5. preserve the user's original request as the prompt payload
 6. offer the exact `ona ai automation execute` command before running it
 7. execute a one-off steps spec with an `agent.prompt` step against the environment
-8. report the execution result or identifier and how to monitor it
+8. treat the run as a background handoff once Ona accepts it
+9. report the identifiers and the environment details link so the user can monitor it later
 
 Preferred command shape:
 
@@ -145,6 +146,10 @@ Rules:
   - the selected project or environment changes
   - the prompt payload changes materially
 - once the user has approved a create-and-run flow, do not pause for a second conversational confirmation before the execution step
+- once `ona ai automation execute` emits an `agent_execution_id`, treat the handoff as successful even if later status polling hits `deadline_exceeded`
+- do not automatically retry the same prompt after a polling timeout if the run was already accepted
+- prefer saying "task handed off to Ona" over waiting in chat for the work to complete
+- include the environment link in the handoff message using the authenticated host when available, for example `<host>/details/<environment-id>`
 
 ## Multiple project match flow
 
@@ -241,6 +246,13 @@ After a command runs:
 - report whether it succeeded
 - include the most useful identifier, such as project ID, environment ID, or task execution ID
 - tell the user the next available action
+
+For one-off AI execution specifically:
+
+- if the output includes `agent_execution_id`, report that the task was handed off to Ona
+- include both the `environment_id` and `agent_execution_id` when available
+- include the environment details link and say the user can check back there later
+- do not frame a post-handoff polling timeout as total failure
 
 If a command fails:
 
