@@ -22,6 +22,7 @@ Use exactly these states when reasoning:
 - `needs_git_auth`
 - `needs_integration`
 - `ready_to_create_environment`
+- `ready_to_start_ai_execution`
 - `ready_to_start_existing_task`
 
 ## Detection behavior
@@ -42,6 +43,12 @@ Interpretation:
 - local auth succeeds and the repo resolves to exactly one project -> `ready_to_create_environment`
 - local auth succeeds and the repo resolves to multiple projects -> `needs_project_resolution`
 - local auth succeeds and the repo resolves to no projects -> inspect repo readiness before offering project creation
+
+After project resolution:
+
+- if the user wants a one-off long-running outcome driven by their prompt -> `ready_to_start_ai_execution`
+- if the user explicitly wants a saved automation -> use the saved automation path
+- if the user explicitly wants a predefined repo task -> `ready_to_start_existing_task`
 
 When command execution is not available:
 
@@ -172,6 +179,9 @@ Supported confirmed actions:
 - `ona login --no-browser`
 - `ona project create <repo-url> ...`
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
+- `ona environment start <environment-id> --set-as-context`
+- `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation start <automation-id> --project <project-id>`
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
@@ -194,6 +204,7 @@ Use one sentence naming the current state and the most important consequence.
 Examples:
 
 - `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
+- `Readiness`: Ready to start AI execution. The local Ona CLI is authenticated, the project is selected, and I can run the user's prompt inside Ona after you confirm the exact command.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
 - `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
 - `Readiness`: Ready to prepare the repo. I could not find the Ona CLI locally, but I can still set up the Dev Container and Ona configuration files in this repository.

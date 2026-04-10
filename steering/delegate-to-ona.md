@@ -11,13 +11,14 @@ Recommend **staying local** when the task is:
 - mostly exploratory
 - a UI or wording tweak that benefits from immediate iteration
 
-Recommend **Ona Agent** when the task is:
+Recommend **one-off Ona AI execution** when the task is:
 
 - a one-off task that may take a while
 - likely to run many commands, tests, or scans
 - best done in an isolated environment
 - better suited to running after the user closes the laptop
 - likely to benefit from launching an Ona environment right now
+- long-running but not inherently recurring
 
 Recommend **Ona Automation** when the task is:
 
@@ -25,6 +26,8 @@ Recommend **Ona Automation** when the task is:
 - triggered by external events
 - applied across multiple repositories
 - a workflow the team wants to standardize
+
+Do not choose automation just because the user says "overnight". That implies duration, not recurrence. Use automation when the user indicates repetition, schedules, triggers, or a saved workflow.
 
 Recommend an Ona readiness state when Ona is the right fit but setup gaps are likely to block the task.
 
@@ -40,6 +43,7 @@ Use these states when deciding what happens next:
 - `needs_git_auth`
 - `needs_integration`
 - `ready_to_create_environment`
+- `ready_to_start_ai_execution`
 - `ready_to_start_existing_task`
 
 If the task is a strong Ona fit and the repo resolves cleanly to a project, prefer `ready_to_create_environment`.
@@ -73,9 +77,10 @@ If the task is a strong Ona fit and the repo resolves cleanly to a project, pref
 If recommending Ona:
 
 - explain why Ona is a better fit in one or two concrete reasons
-- choose either environment launch or automation recommendation
+- choose between prompt-driven AI execution, environment launch, or automation recommendation
 - do not oversell Ona for a task that is clearly better kept in Kiro
 - if a CLI action is available, explain that it can be run after confirmation
+- preserve the user's original request when the next step is a one-off AI execution
 
 If recommending local work:
 
@@ -92,6 +97,10 @@ If recommending local work:
 ### Environment launch recommendation
 
 `Why Ona`: This work is long-running and likely to involve repeated build or test loops. Ona is a better fit because it can run in an isolated environment and keep going without tying up the local IDE session.
+
+### Prompt-driven AI execution recommendation
+
+`Recommended path`: Create or reuse an Ona environment, then start a one-off AI execution with the user's original prompt.
 
 ### Automation recommendation
 

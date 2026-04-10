@@ -1,7 +1,7 @@
 ---
 name: "ona"
 displayName: "Offload to Ona"
-description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments or existing automation tasks with explicit confirmation."
+description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments, start one-off AI executions, or run saved automations with explicit confirmation."
 keywords: ["ona", "ona cli", "run in ona", "launch in ona", "create ona environment", "ona project", "ona automation", "prepare repo for ona", "dev container for ona", "gitpod", "linear in ona", "sentry in ona", "draft pr in ona", "private network in ona"]
 ---
 
@@ -35,6 +35,9 @@ Only run these after explicit user confirmation:
 - `ona login --no-browser`
 - `ona project create <repo-url> ...`
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
+- `ona environment start <environment-id> --set-as-context`
+- `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation start <automation-id> --project <project-id>`
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
@@ -76,8 +79,9 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Prefer Ona for long-running, secure, internal-network-dependent, or repeatable work.
 - Prefer staying local for short, interactive work.
 - Use a **project-first** strategy whenever a project match exists.
+- Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
 - Ask for confirmation before running any side-effecting Ona CLI command.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.
-- Stop after successful environment creation unless the user explicitly wants the next step, such as starting an existing automation task.
+- Preserve the user's original prompt for one-off Ona execution instead of replacing it with a repo task name.

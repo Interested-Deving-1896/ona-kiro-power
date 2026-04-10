@@ -8,7 +8,7 @@ This version is intentionally scoped:
 - project-first matching against existing Ona projects
 - ranked project selection for repositories with many matching projects
 - local Dev Container and Ona config preparation even when the Ona CLI is missing
-- confirmed CLI-backed login, project creation, environment creation, and existing-task start flows
+- confirmed CLI-backed login, project creation, environment creation, one-off AI execution, and saved-automation start flows
 - no MCP server requirement
 - optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list -o json`
 - browser-first fallback when CLI checks are unavailable
@@ -33,6 +33,7 @@ For matching requests, it classifies the task into one of these execution states
 - `needs_git_auth`
 - `needs_integration`
 - `ready_to_create_environment`
+- `ready_to_start_ai_execution`
 - `ready_to_start_existing_task`
 
 For every offload recommendation, it returns:
@@ -66,10 +67,39 @@ These require explicit user confirmation before the power runs them:
 - `ona login --no-browser`
 - `ona project create <repo-url> ...`
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
+- `ona environment start <environment-id> --set-as-context`
+- `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation start <automation-id> --project <project-id>`
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 This version does **not** run arbitrary `ona environment exec` commands or write automation config into environments.
+
+## Prompt-driven execution
+
+For one-off requests like "run the entire test suite overnight in Ona", the power should:
+
+1. resolve or select the Ona project
+2. create or start an environment
+3. preserve the user's original request as the AI prompt
+4. run a one-off AI execution against that environment
+
+The intended CLI primitive for this is:
+
+```bash
+cat <<'EOF' | ona ai automation execute - --environment-id <environment-id>
+- agent:
+    prompt: |
+      <original user request>
+EOF
+```
+
+This is different from:
+
+- `ona ai automation start`, which starts a saved automation definition
+- `ona automations task start`, which runs a predefined repo task from `.ona/automations.yaml`
+
+The power should only use predefined repo tasks when the user explicitly asks for a known task.
 
 ## No-CLI setup behavior
 
@@ -317,6 +347,17 @@ The power should not guess. It should:
 - show all matches when the list is short
 - offer `show all` when the list is long
 - allow `filter <text>` and `use <project-id>`
+
+### The user asked for a one-off Ona run, but the power tried to start a repo task
+
+That is the wrong execution path unless the user explicitly asked for a predefined task.
+
+The power should:
+
+- treat one-off long-running work as prompt-driven AI execution
+- preserve the original user request as the prompt
+- use `ona ai automation execute ... --environment-id <environment-id>`
+- reserve `.ona/automations.yaml` task discovery for explicit task requests
 
 ## Manual test cases
 

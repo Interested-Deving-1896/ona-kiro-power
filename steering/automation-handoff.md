@@ -1,6 +1,6 @@
 # Automation Handoff
 
-Use this guide when the user's request should become an Ona Automation rather than a one-off Ona Agent task.
+Use this guide when the user's request should become an Ona Automation rather than a one-off prompt-driven AI execution.
 
 This guide is for recommending or launching **existing** automation behavior. It is not a license to invent brand new automation task definitions through CLI commands in this version.
 
@@ -21,9 +21,11 @@ Examples:
 - scheduled test or validation sweeps
 - repeated docs or migration work across repositories
 
+Do not use this guide for one-off requests that merely happen to run for a long time. "Run this overnight in Ona" should usually stay a one-off AI execution unless the user asks for a recurring or saved workflow.
+
 ## What to hand off
 
-When recommending automation, produce a brief that is ready to paste into Ona Automation setup.
+When recommending automation, produce a brief that is ready to paste into Ona Automation setup or map to a saved AI automation.
 
 The `Ona prompt` section should include:
 

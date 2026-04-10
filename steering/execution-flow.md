@@ -50,6 +50,9 @@ Only run these after the user explicitly confirms:
 - `ona login --no-browser`
 - `ona project create <repo-url> --name <derived-name> ...`
 - `ona environment create <project-id> --dont-wait --set-as-context --name <derived-name>`
+- `ona environment start <environment-id> --set-as-context`
+- `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation start <automation-id> --project <project-id>`
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
@@ -88,6 +91,40 @@ Default flags:
 - `--name <derived-name>`
 
 Do not automatically open the environment in an editor unless the user asks.
+
+## One-off AI execution flow
+
+Use this flow when the user wants Ona to take a goal or prompt and work on it, such as:
+
+- "run the entire test suite overnight in Ona"
+- "investigate this bug in Ona"
+- "use Ona to fix this and raise a draft PR"
+
+Suggested flow:
+
+1. resolve or select the project
+2. create a fresh environment or start a chosen stopped environment
+3. preserve the user's original request as the prompt payload
+4. offer the exact `ona ai automation execute` command before running it
+5. execute a one-off steps spec with an `agent.prompt` step against the environment
+6. report the execution result or identifier and how to monitor it
+
+Preferred command shape:
+
+```bash
+cat <<'EOF' | ona ai automation execute - --environment-id <environment-id>
+- agent:
+    prompt: |
+      <original user request>
+EOF
+```
+
+Rules:
+
+- do not replace the original user request with a repo task name
+- do not inspect `.ona/automations.yaml` unless the user explicitly asked for a predefined repo task
+- do not classify a one-off overnight request as recurring automation just because it is long-running
+- if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
 
 ## Multiple project match flow
 
@@ -128,7 +165,7 @@ If the repo lacks a devcontainer, stop and explain why project creation is not b
 
 ## Existing automation task flow
 
-Only use this when the user explicitly wants to run an existing automation task.
+Only use this when the user explicitly wants to run an existing automation task from the repo configuration.
 
 Suggested flow:
 
@@ -140,6 +177,22 @@ Suggested flow:
 6. ask for confirmation before starting it
 
 Do not invent new automation task definitions in this flow.
+
+## Saved automation flow
+
+Use this flow when the user wants to run a saved Ona AI automation, not just a one-off prompt.
+
+Suggested flow:
+
+1. identify the saved automation ID
+2. confirm the project or repository context
+3. offer the exact `ona ai automation start <automation-id> --project <project-id>` command
+4. ask for confirmation before running it
+
+This is different from:
+
+- one-off prompt-driven execution via `ona ai automation execute`
+- predefined repo task execution via `ona automations task start`
 
 ## Reporting rules
 
