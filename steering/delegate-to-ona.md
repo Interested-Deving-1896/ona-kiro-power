@@ -34,6 +34,7 @@ Use these states when deciding what happens next:
 
 - `stay-local`
 - `needs_cli`
+- `ready_to_prepare_repo`
 - `needs_ona_login`
 - `needs_project_resolution`
 - `needs_git_auth`

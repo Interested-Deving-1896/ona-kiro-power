@@ -2,134 +2,34 @@
 name: "ona"
 displayName: "Offload to Ona"
 description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments or existing automation tasks with explicit confirmation."
-keywords: ["ona", "gitpod", "background agent", "run overnight", "automation", "secure environment", "draft pr", "pull request", "linear", "sentry", "notion", "internal access", "long-running", "offload", "agent", "repeatable work", "recurring task", "vpc", "private network", "launch environment", "use ona cli"]
+keywords: ["ona", "ona cli", "run in ona", "launch in ona", "create ona environment", "ona project", "ona automation", "prepare repo for ona", "dev container for ona", "gitpod", "linear in ona", "sentry in ona", "draft pr in ona", "private network in ona"]
 ---
 
 # Onboarding
 
-## What this power does
+Use this power when the user wants help deciding whether work belongs in Ona, launching the next step with the Ona CLI, or preparing a repository so it is ready for Ona later.
 
-Use this power when the user wants to decide whether work should move from Kiro into Ona, and when possible, launch the next step through the Ona CLI.
+When this power first activates:
 
-This version is a **CLI-backed launcher**:
+1. Decide whether the task should stay local or move to Ona.
+2. If the user wants direct Ona execution and Kiro can run shell commands, use the safe preflight checks listed below.
+3. If the Ona CLI is unavailable but the user wants to prepare the repository for Ona, switch to the local setup path instead of stopping.
 
-- it can detect local Ona readiness automatically
-- it prefers existing Ona projects over raw repository URLs
-- it ranks matching projects instead of hard-truncating them
-- it can prepare a repository for Ona locally even when the Ona CLI is not installed
-- it can offer to run `ona login`
-- it can offer to create an Ona project
-- it can offer to create an Ona environment
-- it can offer to start an existing automation task
+## Safe preflight checks
 
-This version is **not** a general remote execution engine. Do not claim that it can:
+When command execution is available, use these in order:
 
-- run arbitrary `ona environment exec` commands
-- write `automations.yaml` into an environment
-- create brand new automation tasks or services from natural language alone
-- open an editor automatically unless the user asks
-
-## Step 1: Decide whether Ona is the right fit
-
-Prefer **staying local** when the task is:
-
-- small and fast
-- highly interactive
-- exploratory debugging
-- a quick UI or wording tweak
-
-Prefer **Ona** when the task is:
-
-- long-running
-- secure or isolated
-- dependent on internal or private network access
-- likely to involve repeated build, test, or scan loops
-- repeated on a schedule or across repositories
-
-## Step 2: Use the CLI-backed execution states
-
-Classify the request into one primary state:
-
-- `stay-local`
-- `needs_cli`
-- `ready_to_prepare_repo`
-- `needs_ona_login`
-- `needs_project_resolution`
-- `needs_git_auth`
-- `needs_integration`
-- `ready_to_create_environment`
-- `ready_to_start_existing_task`
-
-Use these states to drive both the explanation and the next action.
-
-## Step 3: Run safe preflight checks automatically when command execution is available
-
-Safe preflight commands:
-
-1. `command -v ona`
-2. `ona whoami -o json`
-3. `git remote get-url origin`
-4. `ona project list -o json`
-5. `ona environment list -a -o json`
-
-Use them in this order.
-
-Interpretation rules:
-
-- if the task is not a good Ona fit -> `stay-local`
-- if `command -v ona` fails and the request is about setting up a Dev Container or preparing the repo for Ona -> `ready_to_prepare_repo`
-- if `command -v ona` fails and the request is about launching Ona directly -> `needs_cli`
-- if `ona whoami -o json` fails -> `needs_ona_login`
-- if the current repo resolves to exactly one Ona project -> use that project
-- if it resolves to multiple projects -> `needs_project_resolution`
-- if it resolves to no project -> inspect repo readiness before offering project creation
+- `command -v ona`
+- `ona whoami -o json`
+- `git remote get-url origin`
+- `ona project list -o json`
+- `ona environment list -a -o json`
 
 Do not run side-effecting commands during preflight.
 
-## Step 4: Resolve projects in a project-first way
+## Side-effecting commands
 
-When a current Git repository is available:
-
-1. Read `git remote get-url origin`
-2. Normalize GitHub SSH and HTTPS URLs before matching
-3. Inspect `ona project list -o json`
-4. Inspect `ona environment list -a -o json` for project recency
-5. Match on project repository metadata, not just project name
-
-Use the repository URL under the project's initializer metadata when available.
-
-Matching rules:
-
-- exactly one match -> use that project ID
-- 2 to 10 matches -> show all matches
-- more than 10 matches -> show a ranked top list first and offer to show all
-- zero matches -> check `.devcontainer/devcontainer.json`
-
-If no project exists:
-
-- if `.devcontainer/devcontainer.json` exists, offer to create a project after confirmation
-- if it does not exist, stop and explain that the repo is not ready for automatic project creation
-
-Project ranking rules:
-
-- rank exact repo matches above everything else
-- then rank by recent personal usage when that can be derived from environments
-- then rank by user-supplied project-name hints if present
-- then fall back to name order
-
-For large match sets:
-
-- show the top 5 first
-- tell the user how many more matches exist
-- support follow-ups like `show all`, `filter <text>`, and `use <project-id>`
-
-Do not silently choose between multiple projects.
-
-## Step 5: Require confirmation before any side effect
-
-All side-effecting CLI actions require explicit user confirmation.
-
-Supported confirmed commands:
+Only run these after explicit user confirmation:
 
 - `ona login`
 - `ona login --no-browser`
@@ -138,40 +38,9 @@ Supported confirmed commands:
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
-When a mutating action is available:
+## Response contract
 
-- name the exact command you intend to run
-- explain why that command is the next step
-- ask for confirmation before running it
-
-Local repository preparation should also be explicit:
-
-- if the user wants help setting up a Dev Container or Ona config locally, explain that the power can prepare the repo without the Ona CLI
-- use the canonical “Automated dev environment setup” prompt for that path
-- prefer generating `.devcontainer/devcontainer.json` and `.ona/automations.yaml`
-- do not require Ona login for this local-preparation flow
-
-## Step 6: Keep Ona login, Git auth, and integrations separate
-
-Treat these as different readiness layers:
-
-1. **Ona login**
-   - Browser path: `https://app.ona.com`
-   - CLI path: `ona login`
-   - No-browser option: `ona login --no-browser`
-   - PAT fallback: `ona login --token <token>`
-
-2. **Git provider authentication**
-   - Needed for cloning, pushing, and PR workflows
-   - Do not imply that Ona login covers Git auth
-   - Point users to `https://app.ona.com/settings/git-authentications` when relevant
-
-3. **Optional integrations**
-   - Linear, Sentry, and Notion are only required when the requested workflow depends on them
-
-## Step 7: Keep the structured response contract
-
-For every Ona-oriented response, use these exact sections in order:
+For Ona-oriented responses, keep this section order:
 
 1. `Why Ona`
 2. `Recommended path`
@@ -180,35 +49,29 @@ For every Ona-oriented response, use these exact sections in order:
 5. `Ona prompt`
 6. `Additional setup needed`
 
-Rules:
+`Next step` should say whether the power can run the action now or what setup or confirmation is still needed.
 
-- `Next step` should say whether the power can run the action now, or what setup/confirmation is still needed
-- `Ona prompt` remains required even when CLI execution is available
-- `Ona prompt` should use the canonical setup prompt when the user is preparing a repo for Ona
-- `Additional setup needed` should only mention blockers relevant to the requested task
+## What not to claim
 
-## Step 8: Respect Kiro shell approvals
+This version is a CLI-backed launcher and local setup helper. Do not claim that it can:
 
-This power runs shell commands through Kiro's normal command approval system.
+- run arbitrary `ona environment exec` commands
+- create brand new automation task definitions or services from natural language alone
+- write automation config directly into an existing remote environment
+- open an editor automatically unless the user asks
 
-Guidance for the user:
+# Steering Instructions
 
-- safe preflight checks may still need Kiro approval depending on their trust settings
-- side-effecting commands should always be explicitly confirmed by the user before you run them
-- do not ask the user to broadly trust wildcard commands unless they specifically want to optimize the workflow
-- if many matching projects exist, the power should narrow the list interactively instead of forcing a guess
-- local file edits for repo setup are allowed even when the Ona CLI is unavailable, as long as the user asked for environment preparation rather than direct Ona launch
+Use steering files for the detailed workflows and best practices instead of repeating them here:
 
-# When To Load Steering Files
+- Deciding whether to stay local or move to Ona: `steering/delegate-to-ona.md`
+- Determining readiness, project resolution, Git auth, or integration gaps: `steering/login-and-readiness.md`
+- Running the CLI-backed launch flow: `steering/execution-flow.md`
+- Preparing a repository locally for Ona: `steering/local-setup-flow.md`
+- Turning repeated work into an automation recommendation: `steering/automation-handoff.md`
+- Checking whether a repo is ready for project creation: `steering/repo-readiness.md`
 
-- Deciding whether to stay local or move to Ona -> `steering/delegate-to-ona.md`
-- Determining login state, project resolution, Git auth, or integration gaps -> `steering/login-and-readiness.md`
-- Preparing or launching the CLI-backed flow -> `steering/execution-flow.md`
-- Preparing a repository locally for Ona -> `steering/local-setup-flow.md`
-- Turning repeated work into an automation recommendation -> `steering/automation-handoff.md`
-- Checking whether a repo is ready for project creation -> `steering/repo-readiness.md`
-
-# Core Rules
+# Global Rules
 
 - Prefer Ona for long-running, secure, internal-network-dependent, or repeatable work.
 - Prefer staying local for short, interactive work.
@@ -216,4 +79,5 @@ Guidance for the user:
 - Ask for confirmation before running any side-effecting Ona CLI command.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
+- Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.
 - Stop after successful environment creation unless the user explicitly wants the next step, such as starting an existing automation task.
