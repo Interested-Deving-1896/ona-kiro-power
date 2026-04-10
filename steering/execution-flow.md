@@ -149,7 +149,7 @@ Rules:
 - once `ona ai automation execute` emits an `agent_execution_id`, treat the handoff as successful even if later status polling hits `deadline_exceeded`
 - do not automatically retry the same prompt after a polling timeout if the run was already accepted
 - prefer saying "task handed off to Ona" over waiting in chat for the work to complete
-- include the environment link in the handoff message using the authenticated host when available, for example `<host>/details/<environment-id>`
+- include the canonical Ona environment link in the handoff message: `https://app.ona.com/details/<environment-id>`
 
 ## Multiple project match flow
 

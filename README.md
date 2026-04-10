@@ -106,7 +106,7 @@ Reporting rule for one-off runs:
 - if `ona ai automation execute` emits an `agent_execution_id`, treat the run as successfully handed off even if the CLI later times out while polling for status
 - do not immediately retry the same prompt after a `deadline_exceeded` polling failure if the agent execution was already started, because that can create duplicate runs
 - respond with the environment link so the user can check progress later
-- build the environment link from the authenticated host when available, for example `<host>/details/<environment-id>`
+- use the canonical Ona app URL for the environment link: `https://app.ona.com/details/<environment-id>`
 
 This is different from:
 
