@@ -44,7 +44,7 @@ Use these states when deciding what happens next:
 - `needs_integration`
 - `ready_to_create_environment`
 - `ready_to_start_ai_execution`
-- `ready_to_start_existing_task`
+- `ready_to_manage_ai_automation`
 
 If the task is a strong Ona fit and the repo resolves cleanly to a project, prefer `ready_to_create_environment`.
 

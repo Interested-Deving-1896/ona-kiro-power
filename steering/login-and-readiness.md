@@ -23,7 +23,7 @@ Use exactly these states when reasoning:
 - `needs_integration`
 - `ready_to_create_environment`
 - `ready_to_start_ai_execution`
-- `ready_to_start_existing_task`
+- `ready_to_manage_ai_automation`
 
 ## Detection behavior
 
@@ -47,8 +47,7 @@ Interpretation:
 After project resolution:
 
 - if the user wants a one-off long-running outcome driven by their prompt -> `ready_to_start_ai_execution`
-- if the user explicitly wants a saved automation -> use the saved automation path
-- if the user explicitly wants a predefined repo task -> `ready_to_start_existing_task`
+- if the user wants recurring, scheduled, PR-triggered, webhook-triggered, or saved automation behavior -> `ready_to_manage_ai_automation`
 
 When command execution is not available:
 
@@ -310,9 +309,9 @@ Supported confirmed actions:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation create -`
+- `ona ai automation update <automation-id> -`
 - `ona ai automation start <automation-id> --project <project-id>`
-- `ona automations task list -e <environment-id> -o json`
-- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 When a command is available:
 

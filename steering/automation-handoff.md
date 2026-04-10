@@ -1,8 +1,8 @@
 # Automation Handoff
 
-Use this guide when the user's request should become an Ona Automation rather than a one-off prompt-driven AI execution.
+Use this guide when the user's request should become an Ona AI Automation rather than a one-off prompt-driven AI execution.
 
-This guide is for recommending or launching **existing** automation behavior. It is not a license to invent brand new automation task definitions through CLI commands in this version.
+This guide is for the Automations product, not for `.ona/automations.yaml` tasks and services.
 
 ## When to choose automation
 
@@ -25,7 +25,7 @@ Do not use this guide for one-off requests that merely happen to run for a long 
 
 ## What to hand off
 
-When recommending automation, produce a brief that is ready to paste into Ona Automation setup or map to a saved AI automation.
+When recommending automation, produce a brief that is ready to paste into Ona Automation setup or map to an AI automation created or updated through the CLI.
 
 If the workflow started as a successful one-off execution and now needs to be reused:
 
@@ -50,17 +50,15 @@ Unless the user specifies otherwise, assume:
 - small, reviewable changes are preferred
 - repeated work should be explicit about success criteria
 
-## Existing task start flow
+## AI automation management flow
 
-If the user explicitly wants to run an existing automation task:
+If the user wants to create, update, or start an Automation:
 
-- require an environment ID or create/select the environment first
-- offer to list tasks with `ona automations task list -e <environment-id> -o json`
-- ask the user to confirm before listing if Kiro requires command approval
-- after identifying the task, offer `ona automations task start <task-ref> -e <environment-id> --dont-wait`
-- require explicit confirmation before starting the task
-
-This flow is for **existing** tasks only.
+- use `ona ai automation list -o json` to discover existing AI automations when needed
+- use `ona ai automation create -` to create a new AI automation from YAML
+- use `ona ai automation update <automation-id> -` to update an existing AI automation from YAML
+- use `ona ai automation start <automation-id> --project <project-id>` only when the user wants to manually start an existing AI automation
+- do not route these requests to `ona automations task ...`
 
 ## Example structure for automation handoff
 

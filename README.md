@@ -8,7 +8,7 @@ This version is intentionally scoped:
 - project-first matching against existing Ona projects
 - ranked project selection for repositories with many matching projects
 - local Dev Container and Ona config preparation even when the Ona CLI is missing
-- confirmed CLI-backed login, project creation, environment creation, one-off AI execution, and saved-automation start flows
+- confirmed CLI-backed login, project creation, environment creation, one-off AI execution, and AI automation create/update/start flows
 - no MCP server requirement
 - optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list --limit 1000 -o json`
 - browser-first fallback when CLI checks are unavailable
@@ -34,7 +34,7 @@ For matching requests, it classifies the task into one of these execution states
 - `needs_integration`
 - `ready_to_create_environment`
 - `ready_to_start_ai_execution`
-- `ready_to_start_existing_task`
+- `ready_to_manage_ai_automation`
 
 For every offload recommendation, it returns:
 
@@ -58,6 +58,7 @@ These are used for detection and project resolution when Kiro allows command exe
 - `git remote get-url origin`
 - `ona project list --limit 1000 -o json`
 - `ona environment list -a -o json`
+- `ona ai automation list -o json`
 
 ### Confirmed side-effect commands
 
@@ -69,9 +70,9 @@ These require explicit user confirmation before the power runs them:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation create -`
+- `ona ai automation update <automation-id> -`
 - `ona ai automation start <automation-id> --project <project-id>`
-- `ona automations task list -e <environment-id> -o json`
-- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 This version does **not** run arbitrary `ona environment exec` commands or write automation config into environments.
 
@@ -113,9 +114,9 @@ Reporting rule for one-off runs:
 This is different from:
 
 - `ona ai automation start`, which starts a saved automation definition
-- `ona automations task start`, which runs a predefined repo task from `.ona/automations.yaml`
+- `.ona/automations.yaml`, which configures per-environment tasks and services rather than the Automations product
 
-The power should only use predefined repo tasks when the user explicitly asks for a known task.
+The power should not use `.ona/automations.yaml` task execution to satisfy user-facing requests like "make this an automation", "run this every day", or other scheduled/background workflow asks.
 
 Environment reuse policy for one-off runs:
 
@@ -130,6 +131,23 @@ For one-off runs, that YAML should be treated as temporary execution input:
 - do not create `.ona/*.yaml` in the repo for a one-off prompt unless the user explicitly asks to keep it
 
 For repeatable workflows, the power can suggest saving AI automation definitions as code under `.ona/` in the repository, then telling the user they can instantiate or reuse them with `ona ai automation create`.
+
+## Recurring automation requests
+
+For requests like "make this an automation" or "run this every day at 3pm", the power should always route to the AI Automations product, not `.ona/automations.yaml`.
+
+Preferred CLI primitives:
+
+- `ona ai automation list -o json` to discover existing AI automations
+- `ona ai automation create -` to create a new AI automation from YAML
+- `ona ai automation update <automation-id> -` to update an existing AI automation from YAML
+- `ona ai automation start <automation-id> --project <project-id>` to manually start an existing AI automation
+
+Important distinction:
+
+- AI Automations are cross-run background workflows with manual, scheduled, PR, or webhook triggers
+- `.ona/automations.yaml` is for per-environment tasks and services such as bootstrapping, servers, and manual commands inside an environment
+- if the user asks for a recurring workflow, the power should never inspect or edit `.ona/automations.yaml` as the primary solution
 
 ## No-CLI setup behavior
 
@@ -506,7 +524,7 @@ When ranking, it should prefer:
 
 ### The user asked for a one-off Ona run, but the power tried to start a repo task
 
-That is the wrong execution path unless the user explicitly asked for a predefined task.
+That is the wrong execution path.
 
 The power should:
 
@@ -514,8 +532,19 @@ The power should:
 - preserve the original user request as the prompt
 - use `ona ai automation execute ... --environment-id <environment-id>`
 - keep the generated YAML ephemeral via stdin or a temp file
-- reserve `.ona/automations.yaml` task discovery for explicit task requests
+- do not inspect `.ona/automations.yaml` as part of this flow
 - treat `ok`, `yes`, or equivalent approval as approval for the agreed create-and-run flow, not just the first command
+
+### The user asked to make something an automation, but the power opened `.ona/automations.yaml`
+
+That is also the wrong execution path.
+
+The power should:
+
+- treat recurring, scheduled, PR-triggered, and webhook-triggered requests as AI automation requests
+- use `ona ai automation list/create/update/start`, not `ona automations task ...`
+- describe `.ona/automations.yaml` only as environment task and service config
+- if it persists reusable AI automation YAML in the repo, keep that as a separate `.ona/*.yaml` automation definition, not as a tasks-and-services edit
 
 ### The power proposed the wrong Ona CLI command
 
@@ -572,7 +601,7 @@ Validate these flows in Kiro:
 11. repo with no matching project and no devcontainer
 12. PR-oriented request with missing Git auth
 13. Linear or Sentry request with missing integration
-14. existing automation task flow after environment selection or creation
+14. recurring automation request creates or updates an AI automation instead of touching `.ona/automations.yaml`
 15. clearly local request that stays in Kiro
 
 ## Known limitations

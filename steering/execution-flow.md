@@ -52,9 +52,9 @@ Only run these after the user explicitly confirms:
 - `ona environment create <project-id> --dont-wait --set-as-context --name <derived-name>`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation create -`
+- `ona ai automation update <automation-id> -`
 - `ona ai automation start <automation-id> --project <project-id>`
-- `ona automations task list -e <environment-id> -o json`
-- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 Command-template rules:
 
@@ -136,7 +136,7 @@ Rules:
 - prefer stdin so the one-off YAML never lands in the repository
 - if stdin is inconvenient, write a temp file outside the repo and delete it after execution
 - do not leave one-off YAML behind in the repo unless the user explicitly wants to keep it
-- do not inspect `.ona/automations.yaml` unless the user explicitly asked for a predefined repo task
+- do not inspect `.ona/automations.yaml` as part of one-off execution or recurring automation flows
 - do not classify a one-off overnight request as recurring automation just because it is long-running
 - if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
 - do not scan `ona environment list` looking for any random running environment to reuse
@@ -216,43 +216,25 @@ Suggested flow:
 
 If the repo lacks a devcontainer, stop and explain why project creation is not being offered automatically.
 
-## Existing automation task flow
+## AI automation flow
 
-Only use this when the user explicitly wants to run an existing automation task from the repo configuration.
-
-Suggested flow:
-
-1. ensure there is a selected or newly created environment
-2. offer to run `ona automations task list -e <environment-id> -o json`
-3. show concise task choices
-4. ask which task to start
-5. offer the exact `ona automations task start <task-ref> -e <environment-id> --dont-wait` command
-6. ask for confirmation before starting it
-
-Do not invent new automation task definitions in this flow.
-
-## Saved automation flow
-
-Use this flow when the user wants to run a saved Ona AI automation, not just a one-off prompt.
+Use this flow when the user wants to create, update, or start an Ona AI automation.
 
 Suggested flow:
 
-1. identify the saved automation ID
-2. confirm the project or repository context
-3. offer the exact `ona ai automation start <automation-id> --project <project-id>` command
-4. ask for confirmation before running it
+1. resolve or select the project context
+2. if needed, list existing AI automations with `ona ai automation list -o json`
+3. decide whether this is a create, update, or start request
+4. generate or update the AI automation YAML specification
+5. offer the exact `ona ai automation create -`, `ona ai automation update <automation-id> -`, or `ona ai automation start <automation-id> --project <project-id>` command
+6. ask for confirmation before running it
 
-This is different from:
+Rules:
 
-- one-off prompt-driven execution via `ona ai automation execute`
-- predefined repo task execution via `ona automations task start`
-
-When a one-off run proves useful and the user wants to repeat it:
-
-1. explain that the original one-off YAML was ephemeral
-2. offer to save a reusable AI automation definition under `.ona/` in the repository
-3. tell the user that repo-stored AI automation files can be instantiated or updated with `ona ai automation create` and related commands
-4. keep `.ona/automations.yaml` reserved for repo tasks and services, not for every one-off prompt
+- recurring, scheduled, PR-triggered, and webhook-triggered requests should use this flow
+- do not route these requests to `.ona/automations.yaml`
+- `.ona/automations.yaml` is for per-environment tasks and services, not for the Automations product
+- if a one-off run proves useful and the user wants repetition, promote it into an AI automation definition under `.ona/` or stdin-fed YAML for `ona ai automation create`
 
 ## Reporting rules
 

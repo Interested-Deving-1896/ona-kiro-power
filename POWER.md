@@ -1,7 +1,7 @@
 ---
 name: "ona"
 displayName: "Offload to Ona"
-description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments, start one-off AI executions, or run saved automations with explicit confirmation."
+description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments, start one-off AI executions, or create, update, and start AI automations with explicit confirmation."
 keywords: ["ona", "ona cli", "run in ona", "launch in ona", "create ona environment", "ona project", "ona automation", "prepare repo for ona", "dev container for ona", "gitpod", "linear in ona", "sentry in ona", "draft pr in ona", "private network in ona"]
 ---
 
@@ -24,6 +24,7 @@ When command execution is available, use these in order:
 - `git remote get-url origin`
 - `ona project list --limit 1000 -o json`
 - `ona environment list -a -o json`
+- `ona ai automation list -o json`
 
 Do not run side-effecting commands during preflight.
 
@@ -45,9 +46,9 @@ Only run these after explicit user confirmation:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
+- `ona ai automation create -`
+- `ona ai automation update <automation-id> -`
 - `ona ai automation start <automation-id> --project <project-id>`
-- `ona automations task list -e <environment-id> -o json`
-- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 When building a command:
 
@@ -96,6 +97,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Filter and rank matching projects before presenting them. Do not dump raw `ona project list` output into the chat.
 - For multiple project matches, use the explicit combined ranking command from `steering/login-and-readiness.md` instead of improvising from the raw JSON.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
+- Treat user-facing recurring requests as AI automations. Do not route them to `.ona/automations.yaml` tasks or `ona automations task ...`.
 - Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
 - Ask for confirmation before starting a side-effecting flow, not before every single command inside an already approved flow.
 - Treat one-off AI executions as background handoffs. Once Ona has accepted the run, report that it was handed off instead of waiting for completion in chat.
