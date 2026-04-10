@@ -16,6 +16,7 @@ Use exactly these states when reasoning:
 
 - `stay-local`
 - `needs_cli`
+- `ready_to_prepare_repo`
 - `needs_ona_login`
 - `needs_project_resolution`
 - `needs_git_auth`
@@ -35,7 +36,8 @@ When command execution is available:
 
 Interpretation:
 
-- `command -v ona` fails -> `needs_cli`
+- `command -v ona` fails and the user wants local repo setup -> `ready_to_prepare_repo`
+- `command -v ona` fails and the user wants direct Ona execution -> `needs_cli`
 - `command -v ona` succeeds and `ona whoami -o json` fails -> `needs_ona_login`
 - local auth succeeds and the repo resolves to exactly one project -> `ready_to_create_environment`
 - local auth succeeds and the repo resolves to multiple projects -> `needs_project_resolution`
@@ -45,6 +47,17 @@ When command execution is not available:
 
 - treat execution state as unavailable
 - give browser-first guidance instead of claiming the power can run CLI-backed actions
+
+## No-CLI local setup path
+
+If the user wants to prepare the repository for Ona rather than launch Ona immediately:
+
+- do not block on missing CLI
+- offer a local setup workflow that generates or updates:
+  - `.devcontainer/devcontainer.json`
+  - `.ona/automations.yaml`
+- use the canonical “Automated dev environment setup” prompt text from Ona's existing automation template
+- treat this as a local repository-improvement flow, not an Ona-login flow
 
 ## Project resolution
 
@@ -183,6 +196,7 @@ Examples:
 - `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
 - `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
+- `Readiness`: Ready to prepare the repo. I could not find the Ona CLI locally, but I can still set up the Dev Container and Ona configuration files in this repository.
 - `Readiness`: Needs project resolution. I found multiple matching Ona projects, ranked the best candidates, and can show or filter the full list before creating anything.
 
 ### `Additional setup needed`

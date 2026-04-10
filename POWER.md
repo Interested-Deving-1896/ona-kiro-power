@@ -16,6 +16,7 @@ This version is a **CLI-backed launcher**:
 - it can detect local Ona readiness automatically
 - it prefers existing Ona projects over raw repository URLs
 - it ranks matching projects instead of hard-truncating them
+- it can prepare a repository for Ona locally even when the Ona CLI is not installed
 - it can offer to run `ona login`
 - it can offer to create an Ona project
 - it can offer to create an Ona environment
@@ -51,6 +52,7 @@ Classify the request into one primary state:
 
 - `stay-local`
 - `needs_cli`
+- `ready_to_prepare_repo`
 - `needs_ona_login`
 - `needs_project_resolution`
 - `needs_git_auth`
@@ -75,7 +77,8 @@ Use them in this order.
 Interpretation rules:
 
 - if the task is not a good Ona fit -> `stay-local`
-- if `command -v ona` fails -> `needs_cli`
+- if `command -v ona` fails and the request is about setting up a Dev Container or preparing the repo for Ona -> `ready_to_prepare_repo`
+- if `command -v ona` fails and the request is about launching Ona directly -> `needs_cli`
 - if `ona whoami -o json` fails -> `needs_ona_login`
 - if the current repo resolves to exactly one Ona project -> use that project
 - if it resolves to multiple projects -> `needs_project_resolution`
@@ -141,6 +144,13 @@ When a mutating action is available:
 - explain why that command is the next step
 - ask for confirmation before running it
 
+Local repository preparation should also be explicit:
+
+- if the user wants help setting up a Dev Container or Ona config locally, explain that the power can prepare the repo without the Ona CLI
+- use the canonical “Automated dev environment setup” prompt for that path
+- prefer generating `.devcontainer/devcontainer.json` and `.ona/automations.yaml`
+- do not require Ona login for this local-preparation flow
+
 ## Step 6: Keep Ona login, Git auth, and integrations separate
 
 Treat these as different readiness layers:
@@ -174,6 +184,7 @@ Rules:
 
 - `Next step` should say whether the power can run the action now, or what setup/confirmation is still needed
 - `Ona prompt` remains required even when CLI execution is available
+- `Ona prompt` should use the canonical setup prompt when the user is preparing a repo for Ona
 - `Additional setup needed` should only mention blockers relevant to the requested task
 
 ## Step 8: Respect Kiro shell approvals
@@ -186,12 +197,14 @@ Guidance for the user:
 - side-effecting commands should always be explicitly confirmed by the user before you run them
 - do not ask the user to broadly trust wildcard commands unless they specifically want to optimize the workflow
 - if many matching projects exist, the power should narrow the list interactively instead of forcing a guess
+- local file edits for repo setup are allowed even when the Ona CLI is unavailable, as long as the user asked for environment preparation rather than direct Ona launch
 
 # When To Load Steering Files
 
 - Deciding whether to stay local or move to Ona -> `steering/delegate-to-ona.md`
 - Determining login state, project resolution, Git auth, or integration gaps -> `steering/login-and-readiness.md`
 - Preparing or launching the CLI-backed flow -> `steering/execution-flow.md`
+- Preparing a repository locally for Ona -> `steering/local-setup-flow.md`
 - Turning repeated work into an automation recommendation -> `steering/automation-handoff.md`
 - Checking whether a repo is ready for project creation -> `steering/repo-readiness.md`
 
@@ -202,4 +215,5 @@ Guidance for the user:
 - Use a **project-first** strategy whenever a project match exists.
 - Ask for confirmation before running any side-effecting Ona CLI command.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
+- If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Stop after successful environment creation unless the user explicitly wants the next step, such as starting an existing automation task.

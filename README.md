@@ -7,6 +7,7 @@ This version is intentionally scoped:
 - automatic local detection when command execution is available
 - project-first matching against existing Ona projects
 - ranked project selection for repositories with many matching projects
+- local Dev Container and Ona config preparation even when the Ona CLI is missing
 - confirmed CLI-backed login, project creation, environment creation, and existing-task start flows
 - no MCP server requirement
 - optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list -o json`
@@ -26,6 +27,7 @@ For matching requests, it classifies the task into one of these execution states
 
 - `stay-local`
 - `needs_cli`
+- `ready_to_prepare_repo`
 - `needs_ona_login`
 - `needs_project_resolution`
 - `needs_git_auth`
@@ -68,6 +70,20 @@ These require explicit user confirmation before the power runs them:
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
 This version does **not** run arbitrary `ona environment exec` commands or write automation config into environments.
+
+## No-CLI setup behavior
+
+If the Ona CLI is missing, the power should still help when the user wants to make the repository Ona-ready.
+
+In that case, it should:
+
+- switch from “launch Ona” to “prepare the repo”
+- generate or update:
+  - `.devcontainer/devcontainer.json`
+  - `.ona/automations.yaml`
+- use the canonical setup prompt from Ona's existing “Automated dev environment setup” workflow
+
+This means a missing CLI should not block repository setup work.
 
 ## Installation
 
@@ -185,6 +201,17 @@ The default minimum signal for automatic project creation is:
 
 - `.devcontainer/devcontainer.json` exists
 
+## Canonical setup prompt
+
+For local repository setup, the power should use the prompt from Ona's existing “Automated dev environment setup” workflow rather than inventing a separate one-off prompt.
+
+The source of truth for that workflow currently lives in Ona's product code and aligns with the public docs story:
+
+- [Set up your first environment](https://ona.com/docs/ona/configuration/devcontainer/getting-started)
+- [Ona docs source bundle](https://ona.com/docs/llms.txt)
+
+The prompt instructs the agent to analyze the codebase, generate or update `devcontainer.json` and Ona automations, use the allowed docs sources, and avoid creating documentation files.
+
 ## Large project sets
 
 This power is designed to work in orgs where many projects may point at the same repository.
@@ -216,6 +243,8 @@ These are good prompts to verify activation and response quality:
 9. `Show all matching projects for this repo.`
 10. `Filter the matching projects to the hosted compute one.`
 11. `Use project 0198131b-296d-7c26-b1b6-1f6e3905174c.`
+12. `Set up this repository for Ona even if the Ona CLI is not installed.`
+13. `Create the Dev Container and Ona automations config using the standard Ona setup prompt.`
 
 ## Suggested release flow
 
@@ -230,11 +259,17 @@ Use a GitHub-first rollout:
 
 ### `ona` CLI is missing
 
-The power should fall back cleanly:
+The power should choose between two paths:
 
 - open [app.ona.com](https://app.ona.com)
 - sign in there
 - install the CLI later if command-line flows are needed
+
+Or, if the user wants repo preparation rather than direct launch:
+
+- set up `.devcontainer/devcontainer.json`
+- set up `.ona/automations.yaml`
+- use the canonical Ona setup prompt
 
 ### `ona whoami` fails
 
@@ -290,17 +325,18 @@ Validate these flows in Kiro:
 1. authenticated user with a matching project
 2. unauthenticated user who confirms `ona login`
 3. no CLI installed
-4. repo with multiple matching projects
-5. repo with more than 10 matching projects
-6. `show all` follow-up after a ranked preview
-7. `filter <text>` follow-up that narrows the list
-8. `use <project-id>` follow-up that bypasses ranking
-9. repo with no matching project but a valid devcontainer
-10. repo with no matching project and no devcontainer
-11. PR-oriented request with missing Git auth
-12. Linear or Sentry request with missing integration
-13. existing automation task flow after environment selection or creation
-14. clearly local request that stays in Kiro
+4. no CLI installed, but the user asks to prepare the repo for Ona
+5. repo with multiple matching projects
+6. repo with more than 10 matching projects
+7. `show all` follow-up after a ranked preview
+8. `filter <text>` follow-up that narrows the list
+9. `use <project-id>` follow-up that bypasses ranking
+10. repo with no matching project but a valid devcontainer
+11. repo with no matching project and no devcontainer
+12. PR-oriented request with missing Git auth
+13. Linear or Sentry request with missing integration
+14. existing automation task flow after environment selection or creation
+15. clearly local request that stays in Kiro
 
 ## Known limitations
 

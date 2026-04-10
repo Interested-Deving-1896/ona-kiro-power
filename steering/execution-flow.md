@@ -16,6 +16,14 @@ Its supported execution path is:
 6. run the confirmed command
 7. report the result and stop unless the user explicitly asks for the next step
 
+It also supports a local repository-preparation path:
+
+1. detect that the user wants Ona-ready setup rather than direct Ona launch
+2. if the Ona CLI is missing, switch to local setup instead of blocking
+3. use the canonical setup prompt to generate Dev Container and Ona config files
+4. validate locally when practical
+5. report what was prepared and what still requires Ona
+
 ## Safe preflight commands
 
 These are safe to run automatically when Kiro allows shell commands:
@@ -44,6 +52,24 @@ Only run these after the user explicitly confirms:
 - `ona environment create <project-id> --dont-wait --set-as-context --name <derived-name>`
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
+
+## Local setup flow
+
+Use this flow when the user wants the repository prepared for Ona and the CLI is missing or not required yet.
+
+Expected outputs:
+
+- `.devcontainer/devcontainer.json`
+- `.ona/automations.yaml`
+- any minimal supporting files needed to make the setup work
+
+Use the canonical setup prompt from Ona's “Automated dev environment setup” workflow rather than inventing a shorter ad hoc prompt.
+
+Local validation should prefer:
+
+- checking the generated files for obvious completeness and consistency
+- project-specific sanity checks from the repository
+- Ona-specific CLI validation only when the CLI is actually available
 
 ## Environment creation flow
 
