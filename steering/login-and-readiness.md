@@ -309,8 +309,8 @@ Supported confirmed actions:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
-- `ona ai automation create -`
-- `ona ai automation update <automation-id> -`
+- `ona ai automation create <path-to-yaml>`
+- `ona ai automation update <automation-id> <path-to-yaml>`
 - `ona ai automation start <automation-id> --project <project-id>`
 
 When a command is available:
@@ -336,7 +336,7 @@ Examples:
 - `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
 - `Readiness`: Ready to start AI execution. The local Ona CLI is authenticated, the project is selected, and I can run the agreed create-and-run flow once you confirm the plan.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
-- `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
+- `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet. Install it with `brew install gitpod-io/tap/ona` or follow `https://ona.com/docs/ona/integrations/cli`.
 - `Readiness`: Ready to prepare the repo. I could not find the Ona CLI locally, but I can still set up the Dev Container and Ona configuration files in this repository.
 - `Readiness`: Needs project resolution. I found multiple matching Ona projects, ranked the best candidates, and can show or filter the full list before creating anything.
 

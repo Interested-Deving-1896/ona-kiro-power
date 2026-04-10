@@ -70,8 +70,8 @@ These require explicit user confirmation before the power runs them:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
-- `ona ai automation create -`
-- `ona ai automation update <automation-id> -`
+- `ona ai automation create <path-to-yaml>`
+- `ona ai automation update <automation-id> <path-to-yaml>`
 - `ona ai automation start <automation-id> --project <project-id>`
 
 This version does **not** run arbitrary `ona environment exec` commands or write automation config into environments.
@@ -95,27 +95,35 @@ The intended wrapped command shape for clean UX is:
 
 ```bash
 env_id="<environment-id>"
-tmp="$(mktemp)"
+prompt_file="$(mktemp)"
+spec="$(mktemp)"
+log="$(mktemp)"
+trap 'rm -f "$prompt_file" "$spec" "$log"' EXIT
 
-(
-cat <<'EOF' | ona ai automation execute - --environment-id "$env_id" >"$tmp" 2>&1
-- agent:
-    prompt: |
-      <original user request>
-EOF
-) || true
+# Write the original user request into $prompt_file using a safe file write.
+# Do not inline raw prompt text into a fixed shell heredoc delimiter.
 
-agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$tmp" | head -1 | cut -d= -f2 || true)"
+python3 - "$prompt_file" >"$spec" <<'PY'
+import sys
+
+prompt = open(sys.argv[1], encoding="utf-8").read().rstrip("\n")
+print("- agent:")
+print("    prompt: |")
+for line in prompt.splitlines() or [""]:
+    print(f"      {line}")
+PY
+
+ona ai automation execute "$spec" --environment-id "$env_id" >"$log" 2>&1 || true
+
+agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$log" | head -1 | cut -d= -f2 || true)"
 
 if [ -n "$agent_execution_id" ]; then
   echo "Task successfully handed off to agent."
   echo "Follow it anytime: https://app.ona.com/details/$env_id"
 else
-  cat "$tmp"
+  cat "$log"
   exit 1
 fi
-
-rm -f "$tmp"
 ```
 
 Reporting rule for one-off runs:
@@ -129,6 +137,8 @@ Reporting rule for one-off runs:
 - do not try commands such as `ona ai execution get`; this power should not invent post-handoff status-check commands
 - do not dump the raw CLI logs back into chat on success
 - do not include `environment_id` or `agent_execution_id` in the user-facing summary unless the user explicitly asks for them
+- do not embed raw prompt text inside a fixed shell heredoc delimiter
+- when temp files are used, clean them up with `trap` so failures do not leave prompt or log files behind
 
 This is different from:
 
@@ -145,8 +155,8 @@ Environment reuse policy for one-off runs:
 
 For one-off runs, that YAML should be treated as temporary execution input:
 
-- prefer stdin so no file is created in the repo
-- if stdin is inconvenient, use a temp file outside the repo and remove it after execution
+- prefer an ephemeral temp file outside the repo, or another equally safe transient mechanism
+- do not keep one-off execution YAML in the repository
 - do not create `.ona/*.yaml` in the repo for a one-off prompt unless the user explicitly asks to keep it
 
 For repeatable workflows, the power should save AI automation definitions as code in the repository before creating or updating them in Ona.
@@ -173,6 +183,13 @@ Preferred repo convention for AI automation definitions:
 - store them under `.ona/ai-automations/`
 - use a stable file name derived from the automation purpose, for example `.ona/ai-automations/daily-full-test-suite.yaml`
 - create or update the Ona automation from that saved file, not from stdin
+- choose update versus create deterministically:
+  - list existing AI automations first
+  - match by exact automation name plus the selected project ID in trigger context
+  - if exactly one automation matches, update it
+  - if no automations match, create a new one
+  - if multiple automations match, show the candidates and ask the user which one to update
+- do not silently create duplicate automations when an exact name-and-project match already exists
 - once created, return the automation definition link:
   - `https://app.gitpod.io/automations/<automation-id>#definition`
 
@@ -182,6 +199,9 @@ If the Ona CLI is missing, the power should still help when the user wants to ma
 
 In that case, it should:
 
+- if the user wants direct Ona execution or AI Automations, first recommend installing the CLI:
+  - `brew install gitpod-io/tap/ona`
+  - or follow the official setup docs: `https://ona.com/docs/ona/integrations/cli`
 - switch from “launch Ona” to “prepare the repo”
 - generate or update:
   - `.devcontainer/devcontainer.json`

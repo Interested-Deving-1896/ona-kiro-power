@@ -46,8 +46,8 @@ Only run these after explicit user confirmation:
 - `ona environment create <project-id> --dont-wait --set-as-context ...`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
-- `ona ai automation create -`
-- `ona ai automation update <automation-id> -`
+- `ona ai automation create <path-to-yaml>`
+- `ona ai automation update <automation-id> <path-to-yaml>`
 - `ona ai automation start <automation-id> --project <project-id>`
 
 When building a command:
@@ -104,7 +104,9 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Treat one-off AI executions as background handoffs. Once Ona has accepted the run, report that it was handed off instead of waiting for completion in chat.
 - After a one-off AI execution is handed off, stop. Do not poll, retry, or issue follow-up status-check commands unless the user explicitly asks for an update later.
 - For one-off AI execution, prefer a wrapped shell command that captures noisy CLI logs and prints a short handoff confirmation plus the environment link.
+- For one-off AI execution, never interpolate raw user prompt text into a fixed shell heredoc delimiter. Serialize the prompt into a temp spec file safely and clean up temp files with `trap`.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
+- If the Ona CLI is missing and the user wants direct Ona execution or AI automations, tell them how to install it first. Prefer `brew install gitpod-io/tap/ona`, and also point them to `https://ona.com/docs/ona/integrations/cli`.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.
 - Preserve the user's original prompt for one-off Ona execution instead of replacing it with a repo task name.

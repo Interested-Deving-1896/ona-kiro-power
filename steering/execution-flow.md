@@ -52,8 +52,8 @@ Only run these after the user explicitly confirms:
 - `ona environment create <project-id> --dont-wait --set-as-context --name <derived-name>`
 - `ona environment start <environment-id> --set-as-context`
 - `ona ai automation execute - --environment-id <environment-id>`
-- `ona ai automation create -`
-- `ona ai automation update <automation-id> -`
+- `ona ai automation create <path-to-yaml>`
+- `ona ai automation update <automation-id> <path-to-yaml>`
 - `ona ai automation start <automation-id> --project <project-id>`
 
 Command-template rules:
@@ -124,35 +124,45 @@ Preferred command shape:
 
 ```bash
 env_id="<environment-id>"
-tmp="$(mktemp)"
+prompt_file="$(mktemp)"
+spec="$(mktemp)"
+log="$(mktemp)"
+trap 'rm -f "$prompt_file" "$spec" "$log"' EXIT
 
-(
-cat <<'EOF' | ona ai automation execute - --environment-id "$env_id" >"$tmp" 2>&1
-- agent:
-    prompt: |
-      <original user request>
-EOF
-) || true
+# Write the original user request into $prompt_file using a safe file write.
+# Do not inline raw prompt text into a fixed shell heredoc delimiter.
 
-agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$tmp" | head -1 | cut -d= -f2 || true)"
+python3 - "$prompt_file" >"$spec" <<'PY'
+import sys
+
+prompt = open(sys.argv[1], encoding="utf-8").read().rstrip("\n")
+print("- agent:")
+print("    prompt: |")
+for line in prompt.splitlines() or [""]:
+    print(f"      {line}")
+PY
+
+ona ai automation execute "$spec" --environment-id "$env_id" >"$log" 2>&1 || true
+
+agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$log" | head -1 | cut -d= -f2 || true)"
 
 if [ -n "$agent_execution_id" ]; then
   echo "Task successfully handed off to agent."
   echo "Follow it anytime: https://app.ona.com/details/$env_id"
 else
-  cat "$tmp"
+  cat "$log"
   exit 1
 fi
-
-rm -f "$tmp"
 ```
 
 Rules:
 
 - do not replace the original user request with a repo task name
-- prefer stdin so the one-off YAML never lands in the repository
-- if stdin is inconvenient, write a temp file outside the repo and delete it after execution
+- prefer an ephemeral temp spec file outside the repo, or another equally safe transient mechanism
+- do not keep one-off execution YAML in the repository after the handoff finishes
 - do not leave one-off YAML behind in the repo unless the user explicitly wants to keep it
+- do not embed raw prompt text into a fixed shell heredoc delimiter
+- when temp files are used, always clean them up with `trap` even on failure
 - do not inspect `.ona/automations.yaml` as part of one-off execution or recurring automation flows
 - do not classify a one-off overnight request as recurring automation just because it is long-running
 - if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
@@ -242,10 +252,13 @@ Suggested flow:
 
 1. resolve or select the project context
 2. if needed, list existing AI automations with `ona ai automation list -o json`
-3. decide whether this is a create, update, or start request
-4. write the AI automation YAML specification into `.ona/ai-automations/<slug>.yaml`
-5. offer the exact `ona ai automation create <path-to-yaml>`, `ona ai automation update <automation-id> <path-to-yaml>`, or `ona ai automation start <automation-id> --project <project-id>` command
-6. ask for confirmation before running it
+3. write the AI automation YAML specification into `.ona/ai-automations/<slug>.yaml`
+4. match existing AI automations by exact automation name plus the selected project ID in trigger context
+5. if exactly one automation matches, treat the request as an update
+6. if no automations match, treat the request as a create
+7. if multiple automations match, show the candidates and ask the user which one to update
+8. offer the exact `ona ai automation create <path-to-yaml>`, `ona ai automation update <automation-id> <path-to-yaml>`, or `ona ai automation start <automation-id> --project <project-id>` command
+9. ask for confirmation before running it
 
 Rules:
 
@@ -254,6 +267,7 @@ Rules:
 - `.ona/automations.yaml` is for per-environment tasks and services, not for the Automations product
 - if a one-off run proves useful and the user wants repetition, promote it into an AI automation definition under `.ona/ai-automations/`
 - prefer file-based `ona ai automation create` and `ona ai automation update` over stdin for recurring workflows
+- do not silently create duplicate automations when an exact name-and-project match already exists
 - after create or update succeeds, return the automation definition link: `https://app.gitpod.io/automations/<automation-id>#definition`
 
 ## Reporting rules

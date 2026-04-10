@@ -56,9 +56,14 @@ If the user wants to create, update, or start an Automation:
 
 - use `ona ai automation list -o json` to discover existing AI automations when needed
 - write the YAML spec into `.ona/ai-automations/<slug>.yaml`
+- match existing automations by exact automation name plus the selected project ID in trigger context
+- if exactly one automation matches, update it
+- if no automations match, create it
+- if multiple automations match, show the candidates and ask the user which one to update
 - use `ona ai automation create <path-to-yaml>` to create a new AI automation from that saved file
 - use `ona ai automation update <automation-id> <path-to-yaml>` to update an existing AI automation from that saved file
 - use `ona ai automation start <automation-id> --project <project-id>` only when the user wants to manually start an existing AI automation
+- do not silently create duplicate automations when an exact name-and-project match already exists
 - do not route these requests to `ona automations task ...`
 - after create or update, return the automation definition link: `https://app.gitpod.io/automations/<automation-id>#definition`
 
