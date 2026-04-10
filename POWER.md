@@ -22,7 +22,7 @@ When command execution is available, use these in order:
 - `command -v ona`
 - `ona whoami -o json`
 - `git remote get-url origin`
-- `ona project list -o json`
+- `ona project list --limit 1000 -o json`
 - `ona environment list -a -o json`
 
 Do not run side-effecting commands during preflight.
@@ -79,6 +79,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Prefer Ona for long-running, secure, internal-network-dependent, or repeatable work.
 - Prefer staying local for short, interactive work.
 - Use a **project-first** strategy whenever a project match exists.
+- Filter and rank matching projects before presenting them. Do not dump raw `ona project list` output into the chat.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
 - Ask for confirmation before running any side-effecting Ona CLI command.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.

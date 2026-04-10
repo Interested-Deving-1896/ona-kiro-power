@@ -31,7 +31,7 @@ These are safe to run automatically when Kiro allows shell commands:
 - `command -v ona`
 - `ona whoami -o json`
 - `git remote get-url origin`
-- `ona project list -o json`
+- `ona project list --limit 1000 -o json`
 - `ona environment list -a -o json`
 
 These commands should be enough to detect:
@@ -136,7 +136,9 @@ When the repo matches multiple projects:
 1. rank matches by:
    - exact repo match
    - recent personal usage from environments
+   - stronger project signals like `usedBy.totalSubjects`, `automationsFilePath`, and `devcontainerFilePath`
    - project-name hints from the user's wording
+   - clean names before throwaway names
    - fallback name order
 2. if there are 2 to 10 matches, show all of them
 3. if there are more than 10 matches, show the top 5 and state how many remain
@@ -148,6 +150,17 @@ When the repo matches multiple projects:
 5. only proceed once a single project is selected
 
 Do not hard-truncate to 3 candidates.
+
+Do not present the raw output of `ona project list` as the selection experience. Filter and rank in the shell first, then present only the repo-matching candidates.
+
+If one project clearly dominates, such as:
+
+- very recent personal usage
+- much higher shared usage
+- real Ona config present
+- a canonical repo name like `Next`
+
+then recommend that candidate first and explain why, while still allowing the user to override it.
 
 ## Project creation flow
 

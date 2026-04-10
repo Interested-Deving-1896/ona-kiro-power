@@ -32,7 +32,7 @@ When command execution is available:
 1. Run `command -v ona`
 2. Run `ona whoami -o json`
 3. Run `git remote get-url origin`
-4. Run `ona project list -o json`
+4. Run `ona project list --limit 1000 -o json`
 5. Run `ona environment list -a -o json`
 
 Interpretation:
@@ -74,15 +74,19 @@ Resolution algorithm:
 
 1. derive the repository URL from `git remote get-url origin`
 2. normalize SSH and HTTPS GitHub URL variants before matching
-3. inspect `ona project list -o json`
+3. inspect `ona project list --limit 1000 -o json`
 4. inspect `ona environment list -a -o json`
 5. match on repository metadata under the project initializer, not just project name
+6. rank the matching candidates before showing anything to the user
 
 Observed project metadata can include:
 
 - `initializer.specs[].git.remoteUri`
 - `metadata.name`
 - `id`
+- `usedBy.totalSubjects`
+- `automationsFilePath`
+- `devcontainerFilePath`
 
 Observed environment metadata can include:
 
@@ -101,8 +105,10 @@ Ranking rules:
 
 1. exact repository match
 2. recent personal usage derived from environments when available
-3. project-name hints from the user's wording when available
-4. fallback alphabetical order
+3. stronger project signals such as shared usage and attached Ona config
+4. project-name hints from the user's wording when available
+5. clean, canonical names over obviously temporary or unsafe names
+6. fallback alphabetical order
 
 Recent usage heuristic:
 
@@ -111,6 +117,24 @@ Recent usage heuristic:
 - prefer `metadata.lastStartedAt` when available, otherwise `metadata.createdAt`
 
 Do not label a project as "recent" unless that ranking really came from environment history.
+
+Additional ranking heuristics:
+
+- prefer projects with larger `usedBy.totalSubjects` when recency is close or missing
+- prefer projects with `automationsFilePath` or `devcontainerFilePath` set when the workflow depends on Ona setup
+- strongly downrank names that look throwaway or unsafe, such as:
+  - `do-not-open`
+  - `test`
+  - `testing`
+  - `delete`
+  - `ignore`
+- do not apply the negative-name penalty when the user explicitly asks for that project
+
+Presentation rule:
+
+- never dump the raw `ona project list` output into the chat
+- always filter to repo matches first, then show the ranked result set
+- if one candidate is clearly dominant by recency, shared usage, and config readiness, recommend it directly and explain why
 
 If no project exists:
 

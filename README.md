@@ -56,7 +56,7 @@ These are used for detection and project resolution when Kiro allows command exe
 - `command -v ona`
 - `ona whoami -o json`
 - `git remote get-url origin`
-- `ona project list -o json`
+- `ona project list --limit 1000 -o json`
 - `ona environment list -a -o json`
 
 ### Confirmed side-effect commands
@@ -221,7 +221,7 @@ The intended flow is:
 
 1. detect the current `origin` remote
 2. normalize the remote URL
-3. compare it against `ona project list -o json`
+3. fetch the full project set with `ona project list --limit 1000 -o json`
 4. derive recent personal project usage from `ona environment list -a -o json` when possible
 5. use the matching project when there is exactly one match
 6. show all matches when there are up to 10
@@ -232,8 +232,16 @@ Ranking order:
 
 1. exact repo match
 2. recent personal usage inferred from environments
-3. project-name hints from the user request
-4. fallback alphabetical order
+3. stronger project signals such as `usedBy.totalSubjects`, `automationsFilePath`, and `devcontainerFilePath`
+4. project-name hints from the user request
+5. clean, canonical names over obviously throwaway names
+6. fallback alphabetical order
+
+Name-quality heuristic:
+
+- strongly downrank names that look temporary or unsafe such as `do-not-open`, `test`, `testing`, `delete`, `ignore`, or scratch-style labels
+- do not downrank those names if the user explicitly asks for them
+- if one candidate is clearly dominant by recency and usage, recommend it first instead of asking the user to sift through low-quality matches
 
 The default minimum signal for automatic project creation is:
 
@@ -258,12 +266,14 @@ This power is designed to work in orgs where many projects may point at the same
 Behavior expectations:
 
 - it should never hard-truncate the match set to 3
+- it should never print the raw org-wide `ona project list` output to the user as the selection UI
 - it should show all matches when the set is small enough to scan
 - it should show a ranked preview when the set is large
 - it should support follow-ups like:
   - `show all`
   - `filter hosted`
   - `use 0198131b-296d-7c26-b1b6-1f6e3905174c`
+- when one project is obviously dominant, it should recommend that candidate directly and explain why
 
 The project ID is always the escape hatch for power users.
 
@@ -356,6 +366,13 @@ The power should not guess. It should:
 - show all matches when the list is short
 - offer `show all` when the list is long
 - allow `filter <text>` and `use <project-id>`
+
+When ranking, it should prefer:
+
+- projects you have actually used recently
+- projects with stronger shared-usage signals
+- projects with real Ona config attached
+- canonical names like `Next` over throwaway names like `PD-DO-NOT-OPEN`
 
 ### The user asked for a one-off Ona run, but the power tried to start a repo task
 
