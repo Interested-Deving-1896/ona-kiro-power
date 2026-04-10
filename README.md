@@ -91,14 +91,31 @@ For one-off requests like "run the entire test suite overnight in Ona", the powe
 3. preserve the user's original request as the AI prompt
 4. run a one-off AI execution against that environment
 
-The intended CLI primitive for this is:
+The intended wrapped command shape for clean UX is:
 
 ```bash
-cat <<'EOF' | ona ai automation execute - --environment-id <environment-id>
+env_id="<environment-id>"
+tmp="$(mktemp)"
+
+(
+cat <<'EOF' | ona ai automation execute - --environment-id "$env_id" >"$tmp" 2>&1
 - agent:
     prompt: |
       <original user request>
 EOF
+) || true
+
+agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$tmp" | head -1 | cut -d= -f2 || true)"
+
+if [ -n "$agent_execution_id" ]; then
+  echo "Task successfully handed off to agent."
+  echo "Follow it anytime: https://app.ona.com/details/$env_id"
+else
+  cat "$tmp"
+  exit 1
+fi
+
+rm -f "$tmp"
 ```
 
 Reporting rule for one-off runs:
@@ -110,6 +127,8 @@ Reporting rule for one-off runs:
 - use the canonical Ona app URL for the environment link: `https://app.ona.com/details/<environment-id>`
 - do not issue follow-up status commands automatically after handoff
 - do not try commands such as `ona ai execution get`; this power should not invent post-handoff status-check commands
+- do not dump the raw CLI logs back into chat on success
+- do not include `environment_id` or `agent_execution_id` in the user-facing summary unless the user explicitly asks for them
 
 This is different from:
 

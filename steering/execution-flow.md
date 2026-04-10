@@ -123,11 +123,28 @@ Suggested flow:
 Preferred command shape:
 
 ```bash
-cat <<'EOF' | ona ai automation execute - --environment-id <environment-id>
+env_id="<environment-id>"
+tmp="$(mktemp)"
+
+(
+cat <<'EOF' | ona ai automation execute - --environment-id "$env_id" >"$tmp" 2>&1
 - agent:
     prompt: |
       <original user request>
 EOF
+) || true
+
+agent_execution_id="$(grep -o 'agent_execution_id=[0-9a-f-]*' "$tmp" | head -1 | cut -d= -f2 || true)"
+
+if [ -n "$agent_execution_id" ]; then
+  echo "Task successfully handed off to agent."
+  echo "Follow it anytime: https://app.ona.com/details/$env_id"
+else
+  cat "$tmp"
+  exit 1
+fi
+
+rm -f "$tmp"
 ```
 
 Rules:
@@ -151,6 +168,7 @@ Rules:
 - do not automatically retry the same prompt after a polling timeout if the run was already accepted
 - prefer saying "task handed off to Ona" over waiting in chat for the work to complete
 - include the canonical Ona environment link in the handoff message: `https://app.ona.com/details/<environment-id>`
+- wrap the command so raw CLI logs are captured and only a short success message is printed on handoff
 - after handoff, do not poll for status, do not run environment-list checks, and do not invent follow-up commands such as `ona ai execution get`
 - the correct post-handoff UX is to return quickly with the environment link, not to continue checking
 
@@ -247,8 +265,9 @@ After a command runs:
 For one-off AI execution specifically:
 
 - if the output includes `agent_execution_id`, report that the task was handed off to Ona
-- include both the `environment_id` and `agent_execution_id` when available
 - include the environment details link and stop
+- keep the user-facing summary minimal, for example: `Test successfully handed off to agent. Follow it anytime: https://app.ona.com/details/<environment-id>`
+- only surface `environment_id` or `agent_execution_id` when the user explicitly asks for debugging detail
 - do not frame a post-handoff polling timeout as total failure
 
 If a command fails:
