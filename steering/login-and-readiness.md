@@ -74,10 +74,10 @@ Resolution algorithm:
 
 1. derive the repository URL from `git remote get-url origin`
 2. normalize SSH and HTTPS GitHub URL variants before matching
-3. inspect `ona project list --limit 1000 -o json`
-4. inspect `ona environment list -a -o json`
-5. match on repository metadata under the project initializer, not just project name
-6. rank the matching candidates before showing anything to the user
+3. fetch raw project data with `ona project list --limit 1000 -o json`
+4. fetch raw environment data with `ona environment list -a -o json`
+5. run the combined ranking step before showing anything to the user
+6. match on repository metadata under the project initializer, not just project name
 
 Preferred command sequence:
 

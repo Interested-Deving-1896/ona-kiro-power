@@ -27,6 +27,12 @@ When command execution is available, use these in order:
 
 Do not run side-effecting commands during preflight.
 
+For project selection specifically:
+
+- do not reason directly from the raw `ona project list --limit 1000 -o json` output in chat
+- after preflight, use the combined filtering and ranking command from `steering/login-and-readiness.md`
+- only present repo-matching, ranked candidates to the user
+
 ## Side-effecting commands
 
 Only run these after explicit user confirmation:
@@ -86,6 +92,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Prefer staying local for short, interactive work.
 - Use a **project-first** strategy whenever a project match exists.
 - Filter and rank matching projects before presenting them. Do not dump raw `ona project list` output into the chat.
+- For multiple project matches, use the explicit combined ranking command from `steering/login-and-readiness.md` instead of improvising from the raw JSON.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
 - Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
 - Ask for confirmation before starting a side-effecting flow, not before every single command inside an already approved flow.

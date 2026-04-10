@@ -10,7 +10,7 @@ This version is intentionally scoped:
 - local Dev Container and Ona config preparation even when the Ona CLI is missing
 - confirmed CLI-backed login, project creation, environment creation, one-off AI execution, and saved-automation start flows
 - no MCP server requirement
-- optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list -o json`
+- optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list --limit 1000 -o json`
 - browser-first fallback when CLI checks are unavailable
 
 ## What it does
@@ -247,6 +247,11 @@ The intended flow is:
 6. show all matches when there are up to 10
 7. show a ranked top 5 plus a path to show all when there are more than 10
 8. offer project creation only when there is no match and the repo appears Ona-ready
+
+Non-negotiable rule:
+
+- do not let Kiro infer project selection from raw `ona project list` output alone
+- always run the combined ranking step below before presenting project choices
 
 Preferred shell recipe for project selection:
 

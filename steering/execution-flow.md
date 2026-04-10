@@ -178,6 +178,7 @@ Do not present the raw output of `ona project list` as the selection experience.
 Preferred rule:
 
 - do not run `ona project list -o json` and then reason about the full blob in chat
+- do not invent an alternative ranking method when the combined ranking command in `steering/login-and-readiness.md` is available
 - run a single shell ranking step that:
   - normalizes `git remote get-url origin`
   - filters projects to exact repo matches
