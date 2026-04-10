@@ -75,6 +75,12 @@ These require explicit user confirmation before the power runs them:
 
 This version does **not** run arbitrary `ona environment exec` commands or write automation config into environments.
 
+Command-template rule:
+
+- use flags only when the specific command supports them
+- do not assume `-o json` works on `ona environment create`
+- when a command already prints the needed identifier directly, prefer the plain command over adding formatting flags
+
 ## Prompt-driven execution
 
 For one-off requests like "run the entire test suite overnight in Ona", the power should:
@@ -170,13 +176,13 @@ This power uses Kiro's normal shell-command approval flow.
 Expected behavior:
 
 - Kiro may ask the user to approve preflight checks
-- mutating Ona CLI commands should only be run after the user explicitly confirms the action
+- mutating Ona CLI flows should only be run after the user explicitly confirms the plan
 - users do not need to grant broad wildcard trust for this version to work
 
 Recommended approach:
 
 - approve preflight commands as prompted
-- approve side-effect commands intentionally when the power explains the exact command and why it needs to run it
+- after the power proposes a short multi-step plan, one user confirmation should cover the agreed flow unless something materially changes
 
 ## Login and setup expectations
 
@@ -392,6 +398,15 @@ The power should:
 - use `ona ai automation execute ... --environment-id <environment-id>`
 - keep the generated YAML ephemeral via stdin or a temp file
 - reserve `.ona/automations.yaml` task discovery for explicit task requests
+- treat `ok`, `yes`, or equivalent approval as approval for the agreed create-and-run flow, not just the first command
+
+### The power proposed the wrong Ona CLI command
+
+The power should:
+
+- validate command flags against the live CLI help before recommending them
+- avoid unsupported formatting flags such as `-o json` on `ona environment create`
+- fall back to the simplest known-good command form when only the environment ID is needed
 
 ### The power tried to reuse some other running environment automatically
 

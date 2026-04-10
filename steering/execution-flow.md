@@ -11,9 +11,9 @@ Its supported execution path is:
 1. run preflight checks
 2. resolve the current repo to an Ona project if possible
 3. rank and narrow candidate projects if there are multiple matches
-4. explain readiness and the exact next command
-5. ask for confirmation
-6. run the confirmed command
+4. explain readiness and the planned flow
+5. ask for confirmation once for the agreed flow
+6. run the flow
 7. report the result and stop unless the user explicitly asks for the next step
 
 It also supports a local repository-preparation path:
@@ -56,6 +56,13 @@ Only run these after the user explicitly confirms:
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
+Command-template rules:
+
+- validate flags against the live `--help` output or a known-good successful run before proposing them
+- do not add `-o json` to commands that do not support it
+- for `ona environment create`, prefer the plain command because it prints the environment ID directly
+- after a failed command due to an invalid flag, correct the template in reasoning and continue without repeating the same bad shape
+
 ## Local setup flow
 
 Use this flow when the user wants the repository prepared for Ona and the CLI is missing or not required yet.
@@ -80,7 +87,7 @@ When the current repo resolves to exactly one project:
 
 1. explain that the project match was found
 2. offer the exact `ona environment create` command
-3. ask for confirmation
+3. if environment creation is just the first step of an already approved create-and-run flow, do not ask again
 4. run it after confirmation
 5. report the environment ID or creation result
 
@@ -132,6 +139,12 @@ Rules:
 - if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
 - do not scan `ona environment list` looking for any random running environment to reuse
 - session-local reuse is good; cross-session reuse should be opt-in
+- if the power proposes "create a fresh environment, then start the one-off AI execution" as one plan and the user says `yes`, `ok`, or equivalent, treat that as approval for the whole flow
+- do not ask again between environment creation and AI execution unless:
+  - the environment creation failed and the fallback plan changes materially
+  - the selected project or environment changes
+  - the prompt payload changes materially
+- once the user has approved a create-and-run flow, do not pause for a second conversational confirmation before the execution step
 
 ## Multiple project match flow
 

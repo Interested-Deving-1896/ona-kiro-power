@@ -41,6 +41,12 @@ Only run these after explicit user confirmation:
 - `ona automations task list -e <environment-id> -o json`
 - `ona automations task start <task-ref> -e <environment-id> --dont-wait`
 
+When building a command:
+
+- use only flags that were validated from the live CLI help or from a successful earlier run
+- do not assume every command supports `-o json`
+- for `ona environment create`, prefer the plain command because it already prints the environment ID directly
+
 ## Response contract
 
 For Ona-oriented responses, keep this section order:
@@ -82,7 +88,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Filter and rank matching projects before presenting them. Do not dump raw `ona project list` output into the chat.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
 - Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
-- Ask for confirmation before running any side-effecting Ona CLI command.
+- Ask for confirmation before starting a side-effecting flow, not before every single command inside an already approved flow.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.

@@ -203,7 +203,7 @@ Integrations page:
 
 ## Confirmation rules
 
-All side-effecting CLI actions require user confirmation.
+All side-effecting CLI flows require user confirmation.
 
 Supported confirmed actions:
 
@@ -219,9 +219,11 @@ Supported confirmed actions:
 
 When a command is available:
 
-- tell the user the exact command you intend to run
-- explain the reason for running it
-- wait for confirmation
+- tell the user the command or short sequence of commands you intend to run
+- explain the reason for running them
+- treat one user confirmation as approval for that agreed flow
+
+Do not ask for a second conversational confirmation inside the same already approved flow unless something material changes.
 
 Do not auto-run login or environment creation just because the user asked to use Ona.
 
@@ -236,7 +238,7 @@ Use one sentence naming the current state and the most important consequence.
 Examples:
 
 - `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
-- `Readiness`: Ready to start AI execution. The local Ona CLI is authenticated, the project is selected, and I can run the user's prompt inside Ona after you confirm the exact command.
+- `Readiness`: Ready to start AI execution. The local Ona CLI is authenticated, the project is selected, and I can run the agreed create-and-run flow once you confirm the plan.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
 - `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
 - `Readiness`: Ready to prepare the repo. I could not find the Ona CLI locally, but I can still set up the Dev Container and Ona configuration files in this repository.

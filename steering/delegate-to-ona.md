@@ -108,7 +108,7 @@ If recommending local work:
 
 ### `ready_to_create_environment`
 
-`Next step`: I can create the Ona environment now with the local CLI after you confirm the exact command.
+`Next step`: I can start the agreed Ona flow now with the local CLI. If we already agreed on create-and-run, I should create the environment and continue without asking again between steps.
 
 ### `needs_ona_login`
 
