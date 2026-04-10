@@ -98,6 +98,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - For multiple project matches, use the explicit combined ranking command from `steering/login-and-readiness.md` instead of improvising from the raw JSON.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
 - Treat user-facing recurring requests as AI automations. Do not route them to `.ona/automations.yaml` tasks or `ona automations task ...`.
+- For recurring AI automations, persist the automation definition in the repo before creating or updating it in Ona.
 - Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
 - Ask for confirmation before starting a side-effecting flow, not before every single command inside an already approved flow.
 - Treat one-off AI executions as background handoffs. Once Ona has accepted the run, report that it was handed off instead of waiting for completion in chat.

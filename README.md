@@ -149,7 +149,7 @@ For one-off runs, that YAML should be treated as temporary execution input:
 - if stdin is inconvenient, use a temp file outside the repo and remove it after execution
 - do not create `.ona/*.yaml` in the repo for a one-off prompt unless the user explicitly asks to keep it
 
-For repeatable workflows, the power can suggest saving AI automation definitions as code under `.ona/` in the repository, then telling the user they can instantiate or reuse them with `ona ai automation create`.
+For repeatable workflows, the power should save AI automation definitions as code in the repository before creating or updating them in Ona.
 
 ## Recurring automation requests
 
@@ -158,8 +158,8 @@ For requests like "make this an automation" or "run this every day at 3pm", the 
 Preferred CLI primitives:
 
 - `ona ai automation list -o json` to discover existing AI automations
-- `ona ai automation create -` to create a new AI automation from YAML
-- `ona ai automation update <automation-id> -` to update an existing AI automation from YAML
+- `ona ai automation create <path-to-yaml>` to create a new AI automation from a repo-stored YAML file
+- `ona ai automation update <automation-id> <path-to-yaml>` to update an existing AI automation from a repo-stored YAML file
 - `ona ai automation start <automation-id> --project <project-id>` to manually start an existing AI automation
 
 Important distinction:
@@ -167,6 +167,14 @@ Important distinction:
 - AI Automations are cross-run background workflows with manual, scheduled, PR, or webhook triggers
 - `.ona/automations.yaml` is for per-environment tasks and services such as bootstrapping, servers, and manual commands inside an environment
 - if the user asks for a recurring workflow, the power should never inspect or edit `.ona/automations.yaml` as the primary solution
+
+Preferred repo convention for AI automation definitions:
+
+- store them under `.ona/ai-automations/`
+- use a stable file name derived from the automation purpose, for example `.ona/ai-automations/daily-full-test-suite.yaml`
+- create or update the Ona automation from that saved file, not from stdin
+- once created, return the automation definition link:
+  - `https://app.gitpod.io/automations/<automation-id>#definition`
 
 ## No-CLI setup behavior
 
@@ -563,7 +571,7 @@ The power should:
 - treat recurring, scheduled, PR-triggered, and webhook-triggered requests as AI automation requests
 - use `ona ai automation list/create/update/start`, not `ona automations task ...`
 - describe `.ona/automations.yaml` only as environment task and service config
-- if it persists reusable AI automation YAML in the repo, keep that as a separate `.ona/*.yaml` automation definition, not as a tasks-and-services edit
+- persist reusable AI automation YAML in the repo under `.ona/ai-automations/`, not as a tasks-and-services edit
 
 ### The power proposed the wrong Ona CLI command
 
@@ -599,9 +607,9 @@ That is the point where the power should switch from ephemeral execution input t
 The power should:
 
 - explain that the one-off execution YAML was temporary
-- suggest saving a reusable AI automation definition under `.ona/`
-- make clear that `.ona/automations.yaml` is for repo tasks and services, while additional `.ona/*.yaml` files can hold reusable AI automation definitions
-- only write or keep those files when the user explicitly wants a repeatable workflow
+- suggest saving a reusable AI automation definition under `.ona/ai-automations/`
+- make clear that `.ona/automations.yaml` is for repo tasks and services, while `.ona/ai-automations/*.yaml` holds reusable AI automation definitions
+- if the user explicitly wants a repeatable workflow, save the YAML file first and then create or update the AI automation from that file
 
 ## Manual test cases
 

@@ -243,8 +243,8 @@ Suggested flow:
 1. resolve or select the project context
 2. if needed, list existing AI automations with `ona ai automation list -o json`
 3. decide whether this is a create, update, or start request
-4. generate or update the AI automation YAML specification
-5. offer the exact `ona ai automation create -`, `ona ai automation update <automation-id> -`, or `ona ai automation start <automation-id> --project <project-id>` command
+4. write the AI automation YAML specification into `.ona/ai-automations/<slug>.yaml`
+5. offer the exact `ona ai automation create <path-to-yaml>`, `ona ai automation update <automation-id> <path-to-yaml>`, or `ona ai automation start <automation-id> --project <project-id>` command
 6. ask for confirmation before running it
 
 Rules:
@@ -252,7 +252,9 @@ Rules:
 - recurring, scheduled, PR-triggered, and webhook-triggered requests should use this flow
 - do not route these requests to `.ona/automations.yaml`
 - `.ona/automations.yaml` is for per-environment tasks and services, not for the Automations product
-- if a one-off run proves useful and the user wants repetition, promote it into an AI automation definition under `.ona/` or stdin-fed YAML for `ona ai automation create`
+- if a one-off run proves useful and the user wants repetition, promote it into an AI automation definition under `.ona/ai-automations/`
+- prefer file-based `ona ai automation create` and `ona ai automation update` over stdin for recurring workflows
+- after create or update succeeds, return the automation definition link: `https://app.gitpod.io/automations/<automation-id>#definition`
 
 ## Reporting rules
 
@@ -261,6 +263,13 @@ After a command runs:
 - report whether it succeeded
 - include the most useful identifier, such as project ID, environment ID, or task execution ID
 - tell the user the next available action
+
+For AI automation create or update specifically:
+
+- say the automation was created or updated successfully
+- include the automation definition link and stop
+- keep the user-facing summary minimal, for example: `Automation created successfully. Open it anytime: https://app.gitpod.io/automations/<automation-id>#definition`
+- if the YAML was saved in the repo, mention the saved path briefly
 
 For one-off AI execution specifically:
 

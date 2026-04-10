@@ -30,7 +30,7 @@ When recommending automation, produce a brief that is ready to paste into Ona Au
 If the workflow started as a successful one-off execution and now needs to be reused:
 
 - explain that the one-off execution YAML should not be kept by default
-- suggest promoting it into a repo-stored AI automation definition under `.ona/`
+- suggest promoting it into a repo-stored AI automation definition under `.ona/ai-automations/`
 - make clear that `.ona/automations.yaml` remains the repo task and service file
 - only persist the new YAML when the user explicitly wants a repeatable workflow
 
@@ -55,10 +55,12 @@ Unless the user specifies otherwise, assume:
 If the user wants to create, update, or start an Automation:
 
 - use `ona ai automation list -o json` to discover existing AI automations when needed
-- use `ona ai automation create -` to create a new AI automation from YAML
-- use `ona ai automation update <automation-id> -` to update an existing AI automation from YAML
+- write the YAML spec into `.ona/ai-automations/<slug>.yaml`
+- use `ona ai automation create <path-to-yaml>` to create a new AI automation from that saved file
+- use `ona ai automation update <automation-id> <path-to-yaml>` to update an existing AI automation from that saved file
 - use `ona ai automation start <automation-id> --project <project-id>` only when the user wants to manually start an existing AI automation
 - do not route these requests to `ona automations task ...`
+- after create or update, return the automation definition link: `https://app.gitpod.io/automations/<automation-id>#definition`
 
 ## Example structure for automation handoff
 
