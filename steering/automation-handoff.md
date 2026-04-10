@@ -2,6 +2,8 @@
 
 Use this guide when the user's request should become an Ona Automation rather than a one-off Ona Agent task.
 
+This guide is for recommending or launching **existing** automation behavior. It is not a license to invent brand new automation task definitions through CLI commands in this version.
+
 ## When to choose automation
 
 Prefer `offload-automation` when the task is:
@@ -39,6 +41,18 @@ Unless the user specifies otherwise, assume:
 - small, reviewable changes are preferred
 - repeated work should be explicit about success criteria
 
+## Existing task start flow
+
+If the user explicitly wants to run an existing automation task:
+
+- require an environment ID or create/select the environment first
+- offer to list tasks with `ona automations task list -e <environment-id> -o json`
+- ask the user to confirm before listing if Kiro requires command approval
+- after identifying the task, offer `ona automations task start <task-ref> -e <environment-id> --dont-wait`
+- require explicit confirmation before starting the task
+
+This flow is for **existing** tasks only.
+
 ## Example structure for automation handoff
 
 ### `Recommended path`
@@ -75,3 +89,5 @@ Do not choose automation when the user only needs:
 - a one-off investigation
 - a single implementation pass
 - work that still needs interactive shaping before repetition makes sense
+
+Also do not claim that this power can create brand new automation tasks or services directly through the CLI in this version.

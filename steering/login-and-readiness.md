@@ -8,34 +8,72 @@ Work through these states in order:
 
 1. Determine whether Ona is a fit for the task.
 2. If yes, determine local CLI readiness if possible.
-3. Determine whether the task also requires Git provider authentication.
-4. Determine whether the task also requires optional integrations.
+3. Resolve the current repository to an Ona project when possible.
+4. Determine whether the task also requires Git provider authentication.
+5. Determine whether the task also requires optional integrations.
 
 Use exactly these states when reasoning:
 
-- `ready`
+- `stay-local`
+- `needs_cli`
 - `needs_ona_login`
-- `unknown_auth_state`
+- `needs_project_resolution`
 - `needs_git_auth`
 - `needs_integration`
+- `ready_to_create_environment`
+- `ready_to_start_existing_task`
 
 ## Detection behavior
 
 When command execution is available:
 
 1. Run `command -v ona`
-2. Run `ona whoami`
+2. Run `ona whoami -o json`
+3. Run `git remote get-url origin`
+4. Run `ona project list -o json`
 
 Interpretation:
 
-- both succeed -> `ready`
-- `command -v ona` succeeds and `ona whoami` fails -> `needs_ona_login`
-- `command -v ona` fails -> `unknown_auth_state`
+- `command -v ona` fails -> `needs_cli`
+- `command -v ona` succeeds and `ona whoami -o json` fails -> `needs_ona_login`
+- local auth succeeds and the repo resolves to exactly one project -> `ready_to_create_environment`
+- local auth succeeds and the repo resolves to multiple projects -> `needs_project_resolution`
+- local auth succeeds and the repo resolves to no projects -> inspect repo readiness before offering project creation
 
 When command execution is not available:
 
-- use `unknown_auth_state`
-- give browser-first guidance instead of blocking
+- treat execution state as unavailable
+- give browser-first guidance instead of claiming the power can run CLI-backed actions
+
+## Project resolution
+
+Use a project-first strategy.
+
+Resolution algorithm:
+
+1. derive the repository URL from `git remote get-url origin`
+2. normalize SSH and HTTPS GitHub URL variants before matching
+3. inspect `ona project list -o json`
+4. match on repository metadata under the project initializer, not just project name
+
+Observed project metadata can include:
+
+- `initializer.specs[].git.remoteUri`
+- `metadata.name`
+- `id`
+
+Matching rules:
+
+- exactly one match -> use that project ID
+- multiple matches -> show concise candidates and require user choice
+- zero matches -> check `.devcontainer/devcontainer.json`
+
+If no project exists:
+
+- if `.devcontainer/devcontainer.json` exists, offer project creation after confirmation
+- if it does not exist, explain that the repo is not ready for automatic project creation
+
+Do not silently choose between multiple projects.
 
 ## Distinguish the setup layers
 
@@ -47,6 +85,7 @@ Preferred guidance:
 
 - open `https://app.ona.com`
 - or run `ona login`
+- or run `ona login --no-browser`
 - or use `ona login --token <token>` with a PAT
 
 PAT page:
@@ -79,6 +118,27 @@ Integrations page:
 
 - `https://app.ona.com/settings/org-integrations`
 
+## Confirmation rules
+
+All side-effecting CLI actions require user confirmation.
+
+Supported confirmed actions:
+
+- `ona login`
+- `ona login --no-browser`
+- `ona project create <repo-url> ...`
+- `ona environment create <project-id> --dont-wait --set-as-context ...`
+- `ona automations task list -e <environment-id> -o json`
+- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
+
+When a command is available:
+
+- tell the user the exact command you intend to run
+- explain the reason for running it
+- wait for confirmation
+
+Do not auto-run login or environment creation just because the user asked to use Ona.
+
 ## Required response structure
 
 For any offload recommendation, include:
@@ -89,9 +149,10 @@ Use one sentence naming the current state and the most important consequence.
 
 Examples:
 
-- `Readiness`: Ready. The local Ona CLI is available and already authenticated.
+- `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
-- `Readiness`: Unknown auth state. I could not verify local CLI access, so the safest path is to sign in through the browser first.
+- `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
+- `Readiness`: Needs project resolution. I found more than one matching Ona project, so I need you to choose the target before I create anything.
 
 ### `Additional setup needed`
 
@@ -102,5 +163,6 @@ Examples:
 - Git provider auth for clone and PR access
 - Linear integration for ticket context
 - Sentry integration for issue context
+- Project creation because no Ona project currently matches this repository
 
 Do not list all possible Ona setup steps on every response.

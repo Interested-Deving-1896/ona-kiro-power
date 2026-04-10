@@ -1,0 +1,107 @@
+# Execution Flow
+
+Use this guide when the user wants the power to actually run Ona CLI commands.
+
+## Execution model
+
+This power is a launcher, not a full orchestration agent.
+
+Its supported execution path is:
+
+1. run preflight checks
+2. resolve the current repo to an Ona project if possible
+3. explain readiness and the exact next command
+4. ask for confirmation
+5. run the confirmed command
+6. report the result and stop unless the user explicitly asks for the next step
+
+## Safe preflight commands
+
+These are safe to run automatically when Kiro allows shell commands:
+
+- `command -v ona`
+- `ona whoami -o json`
+- `git remote get-url origin`
+- `ona project list -o json`
+
+These commands should be enough to detect:
+
+- whether the CLI exists
+- whether the user is logged in
+- what repository is currently in scope
+- whether an Ona project already exists for that repo
+
+## Confirmed side-effect commands
+
+Only run these after the user explicitly confirms:
+
+- `ona login`
+- `ona login --no-browser`
+- `ona project create <repo-url> --name <derived-name> ...`
+- `ona environment create <project-id> --dont-wait --set-as-context --name <derived-name>`
+- `ona automations task list -e <environment-id> -o json`
+- `ona automations task start <task-ref> -e <environment-id> --dont-wait`
+
+## Environment creation flow
+
+When the current repo resolves to exactly one project:
+
+1. explain that the project match was found
+2. offer the exact `ona environment create` command
+3. ask for confirmation
+4. run it after confirmation
+5. report the environment ID or creation result
+
+Default flags:
+
+- `--dont-wait`
+- `--set-as-context`
+- `--name <derived-name>`
+
+Do not automatically open the environment in an editor unless the user asks.
+
+## Project creation flow
+
+Only offer project creation when:
+
+- the current repo does not already match a project
+- `.devcontainer/devcontainer.json` exists
+
+Suggested flow:
+
+1. explain that no matching project exists
+2. explain that the repo appears ready because a devcontainer exists
+3. offer the exact `ona project create` command
+4. ask for confirmation
+5. if project creation succeeds, offer environment creation as the next step
+
+If the repo lacks a devcontainer, stop and explain why project creation is not being offered automatically.
+
+## Existing automation task flow
+
+Only use this when the user explicitly wants to run an existing automation task.
+
+Suggested flow:
+
+1. ensure there is a selected or newly created environment
+2. offer to run `ona automations task list -e <environment-id> -o json`
+3. show concise task choices
+4. ask which task to start
+5. offer the exact `ona automations task start <task-ref> -e <environment-id> --dont-wait` command
+6. ask for confirmation before starting it
+
+Do not invent new automation task definitions in this flow.
+
+## Reporting rules
+
+After a command runs:
+
+- report whether it succeeded
+- include the most useful identifier, such as project ID, environment ID, or task execution ID
+- tell the user the next available action
+
+If a command fails:
+
+- summarize the failure clearly
+- do not claim that Ona itself is broken unless the error shows that
+- fall back to the structured response contract and the shortest recovery path

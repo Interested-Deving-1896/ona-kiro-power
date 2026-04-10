@@ -17,6 +17,7 @@ Recommend **Ona Agent** when the task is:
 - likely to run many commands, tests, or scans
 - best done in an isolated environment
 - better suited to running after the user closes the laptop
+- likely to benefit from launching an Ona environment right now
 
 Recommend **Ona Automation** when the task is:
 
@@ -25,7 +26,22 @@ Recommend **Ona Automation** when the task is:
 - applied across multiple repositories
 - a workflow the team wants to standardize
 
-Recommend **not-ready-yet** when Ona is the right fit but setup gaps are likely to block the task.
+Recommend an Ona readiness state when Ona is the right fit but setup gaps are likely to block the task.
+
+## CLI-backed outcome mapping
+
+Use these states when deciding what happens next:
+
+- `stay-local`
+- `needs_cli`
+- `needs_ona_login`
+- `needs_project_resolution`
+- `needs_git_auth`
+- `needs_integration`
+- `ready_to_create_environment`
+- `ready_to_start_existing_task`
+
+If the task is a strong Ona fit and the repo resolves cleanly to a project, prefer `ready_to_create_environment`.
 
 ## Phrases that should bias toward Ona
 
@@ -39,6 +55,8 @@ Recommend **not-ready-yet** when Ona is the right fit but setup gaps are likely 
 - "pick up tickets"
 - "fix Sentry issues"
 - "open a draft PR"
+- "create an Ona environment"
+- "launch this in Ona"
 
 ## Phrases that should bias toward staying local
 
@@ -54,8 +72,9 @@ Recommend **not-ready-yet** when Ona is the right fit but setup gaps are likely 
 If recommending Ona:
 
 - explain why Ona is a better fit in one or two concrete reasons
-- choose either `offload-agent` or `offload-automation`
+- choose either environment launch or automation recommendation
 - do not oversell Ona for a task that is clearly better kept in Kiro
+- if a CLI action is available, explain that it can be run after confirmation
 
 If recommending local work:
 
@@ -69,10 +88,18 @@ If recommending local work:
 
 `Why Ona`: Ona is not the best next step yet. This looks like a short, interactive change where tight IDE iteration matters more than background execution.
 
-### `offload-agent`
+### Environment launch recommendation
 
 `Why Ona`: This work is long-running and likely to involve repeated build or test loops. Ona is a better fit because it can run in an isolated environment and keep going without tying up the local IDE session.
 
-### `offload-automation`
+### Automation recommendation
 
 `Why Ona`: This is a repeatable workflow, not just a one-off task. Ona Automation is the better fit because the task can be encoded once and run on a schedule or trigger.
+
+### `ready_to_create_environment`
+
+`Next step`: I can create the Ona environment now with the local CLI after you confirm the exact command.
+
+### `needs_ona_login`
+
+`Next step`: I can offer to run `ona login` or `ona login --no-browser`, but I should not start the login flow without confirmation.
