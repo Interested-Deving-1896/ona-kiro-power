@@ -79,6 +79,91 @@ Resolution algorithm:
 5. match on repository metadata under the project initializer, not just project name
 6. rank the matching candidates before showing anything to the user
 
+Preferred command sequence:
+
+1. get the current repo URL:
+   - `git remote get-url origin`
+2. fetch the complete project set:
+   - `ona project list --limit 1000 -o json`
+3. fetch recent environments:
+   - `ona environment list -a -o json`
+4. run one combined ranking step in the shell before speaking
+
+Preferred combined ranking command:
+
+```bash
+repo_url="$(git remote get-url origin)"
+python3 - <<'PY' "$repo_url" \
+  <(ona project list --limit 1000 -o json) \
+  <(ona environment list -a -o json)
+import json, sys
+
+repo_url, projects_path, envs_path = sys.argv[1:4]
+
+def normalize(url: str) -> str:
+    url = url.strip()
+    if url.startswith("git@github.com:"):
+        url = "https://github.com/" + url[len("git@github.com:"):]
+    if url.endswith(".git"):
+        url = url[:-4]
+    return url.lower().rstrip("/")
+
+def throwaway(name: str) -> bool:
+    lowered = name.lower()
+    return any(term in lowered for term in ["do-not-open", "test", "testing", "delete", "ignore", "scratch"])
+
+repo_key = normalize(repo_url)
+projects = json.load(open(projects_path))
+envs = json.load(open(envs_path))
+
+recent = {}
+for env in envs:
+    project_id = env.get("projectId") or env.get("metadata", {}).get("projectId")
+    meta = env.get("metadata", {})
+    ts = meta.get("lastStartedAt") or meta.get("createdAt") or ""
+    if project_id and ts and ts > recent.get(project_id, ""):
+        recent[project_id] = ts
+
+matches = []
+for project in projects:
+    remotes = [
+        normalize(spec.get("git", {}).get("remoteUri", ""))
+        for spec in project.get("initializer", {}).get("specs", [])
+        if spec.get("git", {}).get("remoteUri")
+    ]
+    if repo_key not in remotes:
+        continue
+    meta = project.get("metadata", {})
+    matches.append({
+        "id": project.get("id", ""),
+        "name": meta.get("name", ""),
+        "last_used": recent.get(project.get("id", ""), ""),
+        "used_by": project.get("usedBy", {}).get("totalSubjects", 0),
+        "has_automations": bool(project.get("automationsFilePath")),
+        "has_devcontainer": bool(project.get("devcontainerFilePath")),
+        "penalty": throwaway(meta.get("name", "")),
+    })
+
+matches.sort(key=lambda m: m["name"].lower())
+matches.sort(key=lambda m: m["has_devcontainer"], reverse=True)
+matches.sort(key=lambda m: m["has_automations"], reverse=True)
+matches.sort(key=lambda m: m["used_by"], reverse=True)
+matches.sort(key=lambda m: m["last_used"], reverse=True)
+matches.sort(key=lambda m: bool(m["last_used"]), reverse=True)
+matches.sort(key=lambda m: m["penalty"])
+
+for m in matches:
+    print(json.dumps(m))
+PY
+```
+
+Use the JSON lines from that command as the source of truth for ranking and display.
+
+Filtering rule:
+
+- if the user says `filter <text>`, apply that filter to the ranked repo-matching result set, not to the raw `ona project list` output
+- if the user gives an exact project ID, skip filtering and use that project directly
+
 Observed project metadata can include:
 
 - `initializer.specs[].git.remoteUri`
@@ -112,7 +197,7 @@ Ranking rules:
 
 Recent usage heuristic:
 
-- map recent environments to projects via `metadata.projectId`
+- map recent environments to projects via top-level `projectId`, falling back to `metadata.projectId`
 - sort candidate projects by the newest available environment timestamp for the current user
 - prefer `metadata.lastStartedAt` when available, otherwise `metadata.createdAt`
 
@@ -133,6 +218,7 @@ Additional ranking heuristics:
 Presentation rule:
 
 - never dump the raw `ona project list` output into the chat
+- never treat `ona project list -o json` by itself as the project-selection experience
 - always filter to repo matches first, then show the ranked result set
 - if one candidate is clearly dominant by recency, shared usage, and config readiness, recommend it directly and explain why
 

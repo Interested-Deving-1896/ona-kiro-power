@@ -175,6 +175,16 @@ Do not hard-truncate to 3 candidates.
 
 Do not present the raw output of `ona project list` as the selection experience. Filter and rank in the shell first, then present only the repo-matching candidates.
 
+Preferred rule:
+
+- do not run `ona project list -o json` and then reason about the full blob in chat
+- run a single shell ranking step that:
+  - normalizes `git remote get-url origin`
+  - filters projects to exact repo matches
+  - joins recent environments from `ona environment list -a -o json`
+  - sorts by recency, shared usage, Ona config signals, and name quality
+- only present the filtered, ranked candidates to the user
+
 If one project clearly dominates, such as:
 
 - very recent personal usage

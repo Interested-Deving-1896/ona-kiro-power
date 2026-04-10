@@ -248,6 +248,101 @@ The intended flow is:
 7. show a ranked top 5 plus a path to show all when there are more than 10
 8. offer project creation only when there is no match and the repo appears Ona-ready
 
+Preferred shell recipe for project selection:
+
+```bash
+repo_url="$(git remote get-url origin)"
+python3 - <<'PY' "$repo_url" \
+  <(ona project list --limit 1000 -o json) \
+  <(ona environment list -a -o json)
+import json, sys
+
+repo_url, projects_path, envs_path = sys.argv[1:4]
+
+def normalize_git_url(url: str) -> str:
+    url = url.strip()
+    if url.startswith("git@github.com:"):
+        url = "https://github.com/" + url[len("git@github.com:"):]
+    if url.endswith(".git"):
+        url = url[:-4]
+    return url.lower().rstrip("/")
+
+def looks_throwaway(name: str) -> bool:
+    lowered = name.lower()
+    bad_terms = ["do-not-open", "test", "testing", "delete", "ignore", "scratch"]
+    return any(term in lowered for term in bad_terms)
+
+repo_key = normalize_git_url(repo_url)
+projects = json.load(open(projects_path))
+envs = json.load(open(envs_path))
+
+recent_by_project = {}
+for env in envs:
+    project_id = env.get("projectId") or env.get("metadata", {}).get("projectId")
+    if not project_id:
+        continue
+    meta = env.get("metadata", {})
+    ts = meta.get("lastStartedAt") or meta.get("createdAt") or ""
+    if ts and ts > recent_by_project.get(project_id, ""):
+        recent_by_project[project_id] = ts
+
+matches = []
+for project in projects:
+    remotes = []
+    for spec in project.get("initializer", {}).get("specs", []):
+        git = spec.get("git", {})
+        remote = git.get("remoteUri")
+        if remote:
+            remotes.append(normalize_git_url(remote))
+    if repo_key not in remotes:
+        continue
+
+    meta = project.get("metadata", {})
+    name = meta.get("name", "")
+    project_id = project.get("id", "")
+    used_by = project.get("usedBy", {}).get("totalSubjects", 0)
+    has_config = int(bool(project.get("automationsFilePath"))) + int(bool(project.get("devcontainerFilePath")))
+    last_used = recent_by_project.get(project_id, "")
+    penalty = 1 if looks_throwaway(name) else 0
+    matches.append({
+        "id": project_id,
+        "name": name,
+        "last_used": last_used,
+        "used_by": used_by,
+        "has_config": has_config,
+        "penalty": penalty,
+    })
+
+matches.sort(key=lambda m: m["name"].lower())
+matches.sort(key=lambda m: m["has_config"], reverse=True)
+matches.sort(key=lambda m: m["used_by"], reverse=True)
+matches.sort(key=lambda m: m["last_used"], reverse=True)
+matches.sort(key=lambda m: bool(m["last_used"]), reverse=True)
+matches.sort(key=lambda m: m["penalty"])
+
+print(f"repo={repo_key}")
+print(f"matches={len(matches)}")
+for m in matches:
+    config = []
+    if m["has_config"]:
+        config.append("config")
+    if m["penalty"]:
+        config.append("downranked-name")
+    extra = ", ".join(config) if config else "-"
+    print(f"{m['id']}\t{m['name']}\tlast_used={m['last_used'] or '-'}\tused_by={m['used_by']}\t{extra}")
+PY
+```
+
+Use that output, not raw `ona project list`, as the basis for user-facing project selection.
+
+If the user asks to filter the ranked matches, apply the filter to the ranked result set, not to the raw org-wide project list. For example:
+
+```bash
+<ranked-project-command> | grep -i hosted
+```
+
+Or, when the user gives an exact project ID, bypass ranking and use that project directly.
+
 Ranking order:
 
 1. exact repo match
