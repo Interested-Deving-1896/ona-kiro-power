@@ -81,6 +81,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Use a **project-first** strategy whenever a project match exists.
 - Filter and rank matching projects before presenting them. Do not dump raw `ona project list` output into the chat.
 - Treat one-off long-running requests as prompt-driven AI execution, not as recurring automation.
+- Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
 - Ask for confirmation before running any side-effecting Ona CLI command.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.

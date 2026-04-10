@@ -80,7 +80,7 @@ This version does **not** run arbitrary `ona environment exec` commands or write
 For one-off requests like "run the entire test suite overnight in Ona", the power should:
 
 1. resolve or select the Ona project
-2. create or start an environment
+2. prefer the environment created earlier in the current Kiro session, otherwise create a fresh environment
 3. preserve the user's original request as the AI prompt
 4. run a one-off AI execution against that environment
 
@@ -100,6 +100,12 @@ This is different from:
 - `ona automations task start`, which runs a predefined repo task from `.ona/automations.yaml`
 
 The power should only use predefined repo tasks when the user explicitly asks for a known task.
+
+Environment reuse policy for one-off runs:
+
+- if this Kiro session already created an environment for the task, reuse that environment unless the user asks otherwise
+- if this Kiro session did not create one, prefer creating a fresh environment over attaching to some unrelated running environment
+- only reuse an older or externally created environment when the user explicitly asks to use that environment or names its ID
 
 For one-off runs, that YAML should be treated as temporary execution input:
 
@@ -274,6 +280,7 @@ Behavior expectations:
   - `filter hosted`
   - `use 0198131b-296d-7c26-b1b6-1f6e3905174c`
 - when one project is obviously dominant, it should recommend that candidate directly and explain why
+- after project selection, it should keep environment reuse scoped to the current Kiro session unless the user explicitly opts into another environment
 
 The project ID is always the escape hatch for power users.
 
@@ -385,6 +392,16 @@ The power should:
 - use `ona ai automation execute ... --environment-id <environment-id>`
 - keep the generated YAML ephemeral via stdin or a temp file
 - reserve `.ona/automations.yaml` task discovery for explicit task requests
+
+### The power tried to reuse some other running environment automatically
+
+That should not be the default.
+
+The power should:
+
+- reuse the environment it created earlier in the current Kiro session
+- otherwise create a fresh environment for the current task
+- only use a different existing environment when the user explicitly asks for it
 
 ### The user wants to keep a successful workflow for reuse
 

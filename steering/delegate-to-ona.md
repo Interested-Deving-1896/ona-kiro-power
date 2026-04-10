@@ -100,7 +100,7 @@ If recommending local work:
 
 ### Prompt-driven AI execution recommendation
 
-`Recommended path`: Create or reuse an Ona environment, then start a one-off AI execution with the user's original prompt.
+`Recommended path`: Reuse the environment created earlier in this Kiro session if there is one. Otherwise create a fresh Ona environment, then start a one-off AI execution with the user's original prompt.
 
 ### Automation recommendation
 

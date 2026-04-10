@@ -136,6 +136,14 @@ Presentation rule:
 - always filter to repo matches first, then show the ranked result set
 - if one candidate is clearly dominant by recency, shared usage, and config readiness, recommend it directly and explain why
 
+Environment-selection rule:
+
+- treat environment selection separately from project selection
+- do not automatically attach the current task to an arbitrary existing running environment
+- prefer the environment created earlier in the current Kiro session when available
+- otherwise create a fresh environment for the current task
+- only reuse another existing environment when the user explicitly asks for it or provides the environment ID
+
 If no project exists:
 
 - if `.devcontainer/devcontainer.json` exists, offer project creation after confirmation

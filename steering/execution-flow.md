@@ -103,11 +103,13 @@ Use this flow when the user wants Ona to take a goal or prompt and work on it, s
 Suggested flow:
 
 1. resolve or select the project
-2. create a fresh environment or start a chosen stopped environment
-3. preserve the user's original request as the prompt payload
-4. offer the exact `ona ai automation execute` command before running it
-5. execute a one-off steps spec with an `agent.prompt` step against the environment
-6. report the execution result or identifier and how to monitor it
+2. if this Kiro session already created an environment for the task, reuse it
+3. otherwise create a fresh environment for the current task
+4. only use some other existing environment when the user explicitly asks for it
+5. preserve the user's original request as the prompt payload
+6. offer the exact `ona ai automation execute` command before running it
+7. execute a one-off steps spec with an `agent.prompt` step against the environment
+8. report the execution result or identifier and how to monitor it
 
 Preferred command shape:
 
@@ -128,6 +130,8 @@ Rules:
 - do not inspect `.ona/automations.yaml` unless the user explicitly asked for a predefined repo task
 - do not classify a one-off overnight request as recurring automation just because it is long-running
 - if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
+- do not scan `ona environment list` looking for any random running environment to reuse
+- session-local reuse is good; cross-session reuse should be opt-in
 
 ## Multiple project match flow
 
