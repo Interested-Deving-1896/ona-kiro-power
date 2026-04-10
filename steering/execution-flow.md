@@ -117,7 +117,8 @@ Suggested flow:
 6. offer the exact `ona ai automation execute` command before running it
 7. execute a one-off steps spec with an `agent.prompt` step against the environment
 8. treat the run as a background handoff once Ona accepts it
-9. report the identifiers and the environment details link so the user can monitor it later
+9. report the identifiers and the environment details link
+10. stop unless the user later asks for another action
 
 Preferred command shape:
 
@@ -150,6 +151,8 @@ Rules:
 - do not automatically retry the same prompt after a polling timeout if the run was already accepted
 - prefer saying "task handed off to Ona" over waiting in chat for the work to complete
 - include the canonical Ona environment link in the handoff message: `https://app.ona.com/details/<environment-id>`
+- after handoff, do not poll for status, do not run environment-list checks, and do not invent follow-up commands such as `ona ai execution get`
+- the correct post-handoff UX is to return quickly with the environment link, not to continue checking
 
 ## Multiple project match flow
 
@@ -263,7 +266,7 @@ For one-off AI execution specifically:
 
 - if the output includes `agent_execution_id`, report that the task was handed off to Ona
 - include both the `environment_id` and `agent_execution_id` when available
-- include the environment details link and say the user can check back there later
+- include the environment details link and stop
 - do not frame a post-handoff polling timeout as total failure
 
 If a command fails:

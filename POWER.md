@@ -99,6 +99,7 @@ Use steering files for the detailed workflows and best practices instead of repe
 - Scope environment reuse to the current Kiro session by default. Do not attach a new task to some other existing environment unless the user explicitly asks.
 - Ask for confirmation before starting a side-effecting flow, not before every single command inside an already approved flow.
 - Treat one-off AI executions as background handoffs. Once Ona has accepted the run, report that it was handed off instead of waiting for completion in chat.
+- After a one-off AI execution is handed off, stop. Do not poll, retry, or issue follow-up status-check commands unless the user explicitly asks for an update later.
 - Separate Ona login from Git auth and integrations in both reasoning and user-facing output.
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.

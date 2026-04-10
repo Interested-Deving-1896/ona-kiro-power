@@ -105,8 +105,10 @@ Reporting rule for one-off runs:
 - this is a background handoff, not a foreground task runner
 - if `ona ai automation execute` emits an `agent_execution_id`, treat the run as successfully handed off even if the CLI later times out while polling for status
 - do not immediately retry the same prompt after a `deadline_exceeded` polling failure if the agent execution was already started, because that can create duplicate runs
-- respond with the environment link so the user can check progress later
+- once the run is handed off, stop and respond immediately with the environment link
 - use the canonical Ona app URL for the environment link: `https://app.ona.com/details/<environment-id>`
+- do not issue follow-up status commands automatically after handoff
+- do not try commands such as `ona ai execution get`; this power should not invent post-handoff status-check commands
 
 This is different from:
 
@@ -530,6 +532,7 @@ The power should:
 - treat `agent_execution_id` in `ona ai automation execute` output as the success signal for handoff
 - avoid rerunning the same prompt just because status polling timed out afterward
 - say the work was handed off to Ona and link the user to the environment details page
+- stop after that unless the user explicitly asks for a later update
 
 ### The power tried to reuse some other running environment automatically
 
