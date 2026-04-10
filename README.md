@@ -6,6 +6,7 @@ This version is intentionally scoped:
 
 - automatic local detection when command execution is available
 - project-first matching against existing Ona projects
+- ranked project selection for repositories with many matching projects
 - confirmed CLI-backed login, project creation, environment creation, and existing-task start flows
 - no MCP server requirement
 - optional local checks for `command -v ona`, `ona whoami -o json`, `git remote get-url origin`, and `ona project list -o json`
@@ -53,6 +54,7 @@ These are used for detection and project resolution when Kiro allows command exe
 - `ona whoami -o json`
 - `git remote get-url origin`
 - `ona project list -o json`
+- `ona environment list -a -o json`
 
 ### Confirmed side-effect commands
 
@@ -166,13 +168,38 @@ The intended flow is:
 1. detect the current `origin` remote
 2. normalize the remote URL
 3. compare it against `ona project list -o json`
-4. use the matching project when there is exactly one match
-5. ask the user to choose if there are multiple matches
-6. offer project creation only when there is no match and the repo appears Ona-ready
+4. derive recent personal project usage from `ona environment list -a -o json` when possible
+5. use the matching project when there is exactly one match
+6. show all matches when there are up to 10
+7. show a ranked top 5 plus a path to show all when there are more than 10
+8. offer project creation only when there is no match and the repo appears Ona-ready
+
+Ranking order:
+
+1. exact repo match
+2. recent personal usage inferred from environments
+3. project-name hints from the user request
+4. fallback alphabetical order
 
 The default minimum signal for automatic project creation is:
 
 - `.devcontainer/devcontainer.json` exists
+
+## Large project sets
+
+This power is designed to work in orgs where many projects may point at the same repository.
+
+Behavior expectations:
+
+- it should never hard-truncate the match set to 3
+- it should show all matches when the set is small enough to scan
+- it should show a ranked preview when the set is large
+- it should support follow-ups like:
+  - `show all`
+  - `filter hosted`
+  - `use 0198131b-296d-7c26-b1b6-1f6e3905174c`
+
+The project ID is always the escape hatch for power users.
 
 ## Example prompts
 
@@ -186,6 +213,9 @@ These are good prompts to verify activation and response quality:
 6. `I want Ona to investigate this Sentry issue and propose a fix.`
 7. `If this repo already has an Ona project, create an environment for it.`
 8. `Use the Ona CLI to create the environment, but ask me before you run anything.`
+9. `Show all matching projects for this repo.`
+10. `Filter the matching projects to the hosted compute one.`
+11. `Use project 0198131b-296d-7c26-b1b6-1f6e3905174c.`
 
 ## Suggested release flow
 
@@ -246,7 +276,12 @@ The power should not silently fall back to a raw repo workflow. It should:
 
 ### Multiple Ona projects match the same repository
 
-The power should not guess. It should show concise candidates and ask the user to choose before creating an environment.
+The power should not guess. It should:
+
+- rank the matches
+- show all matches when the list is short
+- offer `show all` when the list is long
+- allow `filter <text>` and `use <project-id>`
 
 ## Manual test cases
 
@@ -256,12 +291,16 @@ Validate these flows in Kiro:
 2. unauthenticated user who confirms `ona login`
 3. no CLI installed
 4. repo with multiple matching projects
-5. repo with no matching project but a valid devcontainer
-6. repo with no matching project and no devcontainer
-7. PR-oriented request with missing Git auth
-8. Linear or Sentry request with missing integration
-9. existing automation task flow after environment selection or creation
-10. clearly local request that stays in Kiro
+5. repo with more than 10 matching projects
+6. `show all` follow-up after a ranked preview
+7. `filter <text>` follow-up that narrows the list
+8. `use <project-id>` follow-up that bypasses ranking
+9. repo with no matching project but a valid devcontainer
+10. repo with no matching project and no devcontainer
+11. PR-oriented request with missing Git auth
+12. Linear or Sentry request with missing integration
+13. existing automation task flow after environment selection or creation
+14. clearly local request that stays in Kiro
 
 ## Known limitations
 

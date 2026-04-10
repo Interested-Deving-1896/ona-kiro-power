@@ -15,6 +15,7 @@ This version is a **CLI-backed launcher**:
 
 - it can detect local Ona readiness automatically
 - it prefers existing Ona projects over raw repository URLs
+- it ranks matching projects instead of hard-truncating them
 - it can offer to run `ona login`
 - it can offer to create an Ona project
 - it can offer to create an Ona environment
@@ -67,6 +68,7 @@ Safe preflight commands:
 2. `ona whoami -o json`
 3. `git remote get-url origin`
 4. `ona project list -o json`
+5. `ona environment list -a -o json`
 
 Use them in this order.
 
@@ -88,20 +90,35 @@ When a current Git repository is available:
 1. Read `git remote get-url origin`
 2. Normalize GitHub SSH and HTTPS URLs before matching
 3. Inspect `ona project list -o json`
-4. Match on project repository metadata, not just project name
+4. Inspect `ona environment list -a -o json` for project recency
+5. Match on project repository metadata, not just project name
 
 Use the repository URL under the project's initializer metadata when available.
 
 Matching rules:
 
 - exactly one match -> use that project ID
-- multiple matches -> stop and ask the user to choose
+- 2 to 10 matches -> show all matches
+- more than 10 matches -> show a ranked top list first and offer to show all
 - zero matches -> check `.devcontainer/devcontainer.json`
 
 If no project exists:
 
 - if `.devcontainer/devcontainer.json` exists, offer to create a project after confirmation
 - if it does not exist, stop and explain that the repo is not ready for automatic project creation
+
+Project ranking rules:
+
+- rank exact repo matches above everything else
+- then rank by recent personal usage when that can be derived from environments
+- then rank by user-supplied project-name hints if present
+- then fall back to name order
+
+For large match sets:
+
+- show the top 5 first
+- tell the user how many more matches exist
+- support follow-ups like `show all`, `filter <text>`, and `use <project-id>`
 
 Do not silently choose between multiple projects.
 
@@ -168,6 +185,7 @@ Guidance for the user:
 - safe preflight checks may still need Kiro approval depending on their trust settings
 - side-effecting commands should always be explicitly confirmed by the user before you run them
 - do not ask the user to broadly trust wildcard commands unless they specifically want to optimize the workflow
+- if many matching projects exist, the power should narrow the list interactively instead of forcing a guess
 
 # When To Load Steering Files
 

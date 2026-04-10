@@ -10,10 +10,11 @@ Its supported execution path is:
 
 1. run preflight checks
 2. resolve the current repo to an Ona project if possible
-3. explain readiness and the exact next command
-4. ask for confirmation
-5. run the confirmed command
-6. report the result and stop unless the user explicitly asks for the next step
+3. rank and narrow candidate projects if there are multiple matches
+4. explain readiness and the exact next command
+5. ask for confirmation
+6. run the confirmed command
+7. report the result and stop unless the user explicitly asks for the next step
 
 ## Safe preflight commands
 
@@ -23,6 +24,7 @@ These are safe to run automatically when Kiro allows shell commands:
 - `ona whoami -o json`
 - `git remote get-url origin`
 - `ona project list -o json`
+- `ona environment list -a -o json`
 
 These commands should be enough to detect:
 
@@ -30,6 +32,7 @@ These commands should be enough to detect:
 - whether the user is logged in
 - what repository is currently in scope
 - whether an Ona project already exists for that repo
+- which matching projects the user has recently used
 
 ## Confirmed side-effect commands
 
@@ -59,6 +62,26 @@ Default flags:
 - `--name <derived-name>`
 
 Do not automatically open the environment in an editor unless the user asks.
+
+## Multiple project match flow
+
+When the repo matches multiple projects:
+
+1. rank matches by:
+   - exact repo match
+   - recent personal usage from environments
+   - project-name hints from the user's wording
+   - fallback name order
+2. if there are 2 to 10 matches, show all of them
+3. if there are more than 10 matches, show the top 5 and state how many remain
+4. support user follow-ups:
+   - `show all`
+   - `filter <text>`
+   - `use <project-id>`
+   - `use <project-name>`
+5. only proceed once a single project is selected
+
+Do not hard-truncate to 3 candidates.
 
 ## Project creation flow
 

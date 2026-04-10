@@ -31,6 +31,7 @@ When command execution is available:
 2. Run `ona whoami -o json`
 3. Run `git remote get-url origin`
 4. Run `ona project list -o json`
+5. Run `ona environment list -a -o json`
 
 Interpretation:
 
@@ -47,14 +48,15 @@ When command execution is not available:
 
 ## Project resolution
 
-Use a project-first strategy.
+Use a project-first strategy that scales to large numbers of matching projects.
 
 Resolution algorithm:
 
 1. derive the repository URL from `git remote get-url origin`
 2. normalize SSH and HTTPS GitHub URL variants before matching
 3. inspect `ona project list -o json`
-4. match on repository metadata under the project initializer, not just project name
+4. inspect `ona environment list -a -o json`
+5. match on repository metadata under the project initializer, not just project name
 
 Observed project metadata can include:
 
@@ -62,16 +64,45 @@ Observed project metadata can include:
 - `metadata.name`
 - `id`
 
+Observed environment metadata can include:
+
+- `metadata.projectId`
+- `metadata.lastStartedAt`
+- `metadata.createdAt`
+
 Matching rules:
 
 - exactly one match -> use that project ID
-- multiple matches -> show concise candidates and require user choice
+- 2 to 10 matches -> show all matching projects
+- more than 10 matches -> show a ranked top 5 plus a path to show all
 - zero matches -> check `.devcontainer/devcontainer.json`
+
+Ranking rules:
+
+1. exact repository match
+2. recent personal usage derived from environments when available
+3. project-name hints from the user's wording when available
+4. fallback alphabetical order
+
+Recent usage heuristic:
+
+- map recent environments to projects via `metadata.projectId`
+- sort candidate projects by the newest available environment timestamp for the current user
+- prefer `metadata.lastStartedAt` when available, otherwise `metadata.createdAt`
+
+Do not label a project as "recent" unless that ranking really came from environment history.
 
 If no project exists:
 
 - if `.devcontainer/devcontainer.json` exists, offer project creation after confirmation
 - if it does not exist, explain that the repo is not ready for automatic project creation
+
+Interactive selection rules:
+
+- allow `show all`
+- allow `filter <text>`
+- allow `use <project-id>`
+- allow `use <project-name>` only when it narrows to a single project
 
 Do not silently choose between multiple projects.
 
@@ -152,7 +183,7 @@ Examples:
 - `Readiness`: Ready to create environment. The local Ona CLI is authenticated and this repository resolves to a single Ona project.
 - `Readiness`: Needs Ona login. The local Ona CLI is present, but the current session is not authenticated.
 - `Readiness`: Needs CLI. I could not find the Ona CLI locally, so I cannot launch anything directly from this power yet.
-- `Readiness`: Needs project resolution. I found more than one matching Ona project, so I need you to choose the target before I create anything.
+- `Readiness`: Needs project resolution. I found multiple matching Ona projects, ranked the best candidates, and can show or filter the full list before creating anything.
 
 ### `Additional setup needed`
 
