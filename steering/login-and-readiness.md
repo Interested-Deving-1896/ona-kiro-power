@@ -89,6 +89,11 @@ Preferred command sequence:
    - `ona environment list -a -o json`
 4. run one combined ranking step in the shell before speaking
 
+Runtime rule:
+
+- run the combined ranking as one shell command
+- do not break it into “fetch JSON now, parse temp files later” steps, because that is more brittle in chat-driven execution and can produce corrupted or stale temp-file inputs
+
 Preferred combined ranking command:
 
 ```bash
@@ -158,6 +163,12 @@ PY
 ```
 
 Use the JSON lines from that command as the source of truth for ranking and display.
+
+Python availability rule:
+
+- `python3` is the preferred runtime for this ranking step
+- if `python3` is unavailable, fall back to a simple repo-match-only listing with names and IDs
+- do not attempt a complex recency-aware ranking in pure shell as a replacement
 
 Filtering rule:
 

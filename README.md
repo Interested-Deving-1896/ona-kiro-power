@@ -252,6 +252,7 @@ Non-negotiable rule:
 
 - do not let Kiro infer project selection from raw `ona project list` output alone
 - always run the combined ranking step below before presenting project choices
+- prefer the one-command shell form below; do not split the project JSON and environment JSON into Kiro-managed temp files for a later Python step
 
 Preferred shell recipe for project selection:
 
@@ -339,6 +340,12 @@ PY
 ```
 
 Use that output, not raw `ona project list`, as the basis for user-facing project selection.
+
+Implementation rule:
+
+- keep the project fetch, environment fetch, and Python ranking logic in one shell command
+- do not first copy JSON into temp files from prior assistant-visible command output and then parse those temp files later
+- if `python3` is missing, fall back to a simpler repo-match-only listing and ask the user to choose, rather than inventing a brittle shell-only recency join
 
 If the user asks to filter the ranked matches, apply the filter to the ranked result set, not to the raw org-wide project list. For example:
 

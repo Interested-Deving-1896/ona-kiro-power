@@ -32,6 +32,8 @@ For project selection specifically:
 - do not reason directly from the raw `ona project list --limit 1000 -o json` output in chat
 - after preflight, use the combined filtering and ranking command from `steering/login-and-readiness.md`
 - only present repo-matching, ranked candidates to the user
+- prefer a single shell command that invokes `ona project list`, `ona environment list`, and `python3` together
+- do not ask Kiro to materialize intermediate JSON temp files from prior command output for ranking
 
 ## Side-effecting commands
 
