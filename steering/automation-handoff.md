@@ -27,6 +27,13 @@ Do not use this guide for one-off requests that merely happen to run for a long 
 
 When recommending automation, produce a brief that is ready to paste into Ona Automation setup or map to a saved AI automation.
 
+If the workflow started as a successful one-off execution and now needs to be reused:
+
+- explain that the one-off execution YAML should not be kept by default
+- suggest promoting it into a repo-stored AI automation definition under `.ona/`
+- make clear that `.ona/automations.yaml` remains the repo task and service file
+- only persist the new YAML when the user explicitly wants a repeatable workflow
+
 The `Ona prompt` section should include:
 
 - the task to perform

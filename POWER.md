@@ -85,3 +85,4 @@ Use steering files for the detailed workflows and best practices instead of repe
 - If the user is trying to get a repo Ona-ready, do not block on the CLI; offer local Dev Container and automation setup instead.
 - Use the canonical setup prompt for local repo-preparation flows rather than inventing a shorter one.
 - Preserve the user's original prompt for one-off Ona execution instead of replacing it with a repo task name.
+- Keep one-off AI execution YAML ephemeral. Only suggest saving YAML under `.ona/` when the user wants a reusable workflow.

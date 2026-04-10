@@ -122,6 +122,9 @@ EOF
 Rules:
 
 - do not replace the original user request with a repo task name
+- prefer stdin so the one-off YAML never lands in the repository
+- if stdin is inconvenient, write a temp file outside the repo and delete it after execution
+- do not leave one-off YAML behind in the repo unless the user explicitly wants to keep it
 - do not inspect `.ona/automations.yaml` unless the user explicitly asked for a predefined repo task
 - do not classify a one-off overnight request as recurring automation just because it is long-running
 - if the environment was created with `--dont-wait`, be prepared to start or wait for it before launching the AI execution if needed
@@ -193,6 +196,13 @@ This is different from:
 
 - one-off prompt-driven execution via `ona ai automation execute`
 - predefined repo task execution via `ona automations task start`
+
+When a one-off run proves useful and the user wants to repeat it:
+
+1. explain that the original one-off YAML was ephemeral
+2. offer to save a reusable AI automation definition under `.ona/` in the repository
+3. tell the user that repo-stored AI automation files can be instantiated or updated with `ona ai automation create` and related commands
+4. keep `.ona/automations.yaml` reserved for repo tasks and services, not for every one-off prompt
 
 ## Reporting rules
 

@@ -101,6 +101,14 @@ This is different from:
 
 The power should only use predefined repo tasks when the user explicitly asks for a known task.
 
+For one-off runs, that YAML should be treated as temporary execution input:
+
+- prefer stdin so no file is created in the repo
+- if stdin is inconvenient, use a temp file outside the repo and remove it after execution
+- do not create `.ona/*.yaml` in the repo for a one-off prompt unless the user explicitly asks to keep it
+
+For repeatable workflows, the power can suggest saving AI automation definitions as code under `.ona/` in the repository, then telling the user they can instantiate or reuse them with `ona ai automation create`.
+
 ## No-CLI setup behavior
 
 If the Ona CLI is missing, the power should still help when the user wants to make the repository Ona-ready.
@@ -239,6 +247,7 @@ The source of truth for that workflow currently lives in Ona's product code and 
 
 - [Set up your first environment](https://ona.com/docs/ona/configuration/devcontainer/getting-started)
 - [Ona docs source bundle](https://ona.com/docs/llms.txt)
+- [Automations as code](https://ona.com/docs/ona/automations/automations-as-code)
 
 The prompt instructs the agent to analyze the codebase, generate or update `devcontainer.json` and Ona automations, use the allowed docs sources, and avoid creating documentation files.
 
@@ -357,7 +366,19 @@ The power should:
 - treat one-off long-running work as prompt-driven AI execution
 - preserve the original user request as the prompt
 - use `ona ai automation execute ... --environment-id <environment-id>`
+- keep the generated YAML ephemeral via stdin or a temp file
 - reserve `.ona/automations.yaml` task discovery for explicit task requests
+
+### The user wants to keep a successful workflow for reuse
+
+That is the point where the power should switch from ephemeral execution input to repo-stored automation-as-code.
+
+The power should:
+
+- explain that the one-off execution YAML was temporary
+- suggest saving a reusable AI automation definition under `.ona/`
+- make clear that `.ona/automations.yaml` is for repo tasks and services, while additional `.ona/*.yaml` files can hold reusable AI automation definitions
+- only write or keep those files when the user explicitly wants a repeatable workflow
 
 ## Manual test cases
 
