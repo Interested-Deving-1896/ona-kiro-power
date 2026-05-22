@@ -1,6 +1,8 @@
 ---
 name: "ona"
 displayName: "Offload to Ona"
+author: "Ona"
+license: "MIT"
 description: "Detect when work belongs in Ona, resolve the current repo to a project, and use the Ona CLI to launch environments, start one-off AI executions, or create, update, and start AI automations with explicit confirmation."
 keywords: ["ona", "ona cli", "run in ona", "launch in ona", "create ona environment", "ona project", "ona automation", "prepare repo for ona", "dev container for ona", "gitpod", "linear in ona", "sentry in ona", "draft pr in ona", "private network in ona"]
 ---
@@ -14,6 +16,12 @@ When this power first activates:
 1. Decide whether the task should stay local or move to Ona.
 2. If the user wants direct Ona execution and Kiro can run shell commands, use the safe preflight checks listed below.
 3. If the Ona CLI is unavailable but the user wants to prepare the repository for Ona, switch to the local setup path instead of stopping.
+
+# License and support
+
+- Power license: MIT. See `LICENSE` in this repository.
+- Underlying tool: Ona CLI. This power does not require or configure an MCP server.
+- Support: Use the Ona CLI documentation at https://ona.com/docs/ona/integrations/cli, the Ona support page at https://ona.com/support, or the Ona contact page at https://ona.com/contact.
 
 ## Safe preflight checks
 
